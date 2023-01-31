@@ -1,11 +1,10 @@
 #include "Circle.h"
 
-
-Circle::Circle(glm::vec2 position, glm::vec2 velocity, float mass, float radius, glm::vec4 colour) :
-    Rigidbody(CIRCLE, position, velocity, 0, mass)
+Circle::Circle(glm::vec2 _position, glm::vec2 _velocity, float _mass, float _radius, float _restitution, glm::vec4 _colour) :
+    Rigidbody(CIRCLE, _position, _velocity, 0, _mass, _restitution)
 {
-    radius = radius;
-    colour = colour;
+    radius = _radius;
+    colour = _colour;
 }
 
 Circle::~Circle()
@@ -14,4 +13,5 @@ Circle::~Circle()
 
 void Circle::Draw()
 {
+    aie::Gizmos::add2DCircle(position, radius, 10, colour);
 }

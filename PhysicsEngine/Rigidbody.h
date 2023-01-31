@@ -3,7 +3,7 @@
 
 class Rigidbody : public PhysicsObject {
 public:
-    Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocity, float _orientation, float _mass);
+    Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocity, float _orientation, float _mass, float _restitution);
     ~Rigidbody();
 
     virtual void FixedUpdate(glm::vec2 gravity, float timeStep);
@@ -15,9 +15,13 @@ public:
     glm::vec2 GetVelocity() { return velocity; }
     float GetMass() { return mass; }
 
-protected:
+    void SetVelocity(glm::vec2 _velocity) { velocity = _velocity; }
     glm::vec2 position;
     glm::vec2 velocity;
     float mass;
+    float restitution = 1.0f;
+
+protected:
+
     float orientation;    //2D so we only need a single float to represent our orientation
 };

@@ -33,6 +33,12 @@
     <ClCompile Include="Circle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Rocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Plane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PhysicsScene.h">
@@ -48,6 +54,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Circle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

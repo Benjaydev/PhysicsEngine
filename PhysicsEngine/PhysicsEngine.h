@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 #include "PhysicsScene.h"
+#include "Rocket.h"
 
 class PhysicsEngine : public aie::Application {
 public:
@@ -17,8 +18,7 @@ public:
 	virtual void draw();
 
 protected:
-
 	aie::Renderer2D*	m_2dRenderer = nullptr;
 	aie::Font*			m_font = nullptr;
-	PhysicsScene* m_physicsScene = nullptr;
+	PhysicsScene* physicsScene = nullptr;
 };
