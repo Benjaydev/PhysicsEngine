@@ -17,20 +17,22 @@ public:
 	void Draw();
 	void CheckCollisions();
 
-	void SetGravity(const glm::vec2 _gravity) { gravity = _gravity; }
-	glm::vec2 GetGravity() const { return gravity; }
-
 	void SetFixedDeltaTime(const float timeStep) { fixedDeltaTime = timeStep; }
 	float GetFixedDeltaTime() const { return fixedDeltaTime; }
 
+	static glm::vec2 NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, glm::vec2 checkPoint);
 	static bool Plane2Plane(PhysicsObject* obj1, PhysicsObject* obj2) { return false; };
 	static bool Plane2Circle(PhysicsObject* obj1, PhysicsObject* obj2);
 	static bool Circle2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
 	static bool Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2);
 
-protected:
-	glm::vec2 gravity;
-	float fixedDeltaTime;
+	static float fixedDeltaTime;
 	float deltaTime = 0.0f;
+	static glm::vec2 gravity;
+
+
+protected:
+
 	std::vector<PhysicsObject*> sceneActors;
 };
+

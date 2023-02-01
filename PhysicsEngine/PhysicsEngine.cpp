@@ -24,7 +24,7 @@ bool PhysicsEngine::startup() {
 	m_font = new aie::Font("../bin/font/consolas.ttf", 32);
 
 	physicsScene = new PhysicsScene();
-	physicsScene->SetGravity(glm::vec2(0, -9.8f));
+	physicsScene->gravity = glm::vec2(0, -9.8f);
 	physicsScene->SetFixedDeltaTime(0.01f);
 
 	aie::Gizmos::create(0, 0, 100, 2000);
@@ -32,19 +32,30 @@ bool PhysicsEngine::startup() {
 
 	Circle* circle;
 	Circle* circle2;
-	circle = new Circle(glm::vec2(-40, 0), glm::vec2(10, 30), 90.0f, 10.0f, 1.0f, glm::vec4(1, 0, 0, 1));
-	circle2 = new Circle(glm::vec2(40, 0), glm::vec2(-10, 30), 90.0f, 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+	//circle = new Circle(glm::vec2(-40, 0), glm::vec2(10, 30), 90.0f, 10.0f, 0.5f, glm::vec4(1, 0, 0, 1));
+	circle2 = new Circle(glm::vec2(40, 0), glm::vec2(-10, 10), 90.0f, 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 	physicsScene->AddActor(circle2);
-	physicsScene->AddActor(circle);
+	//physicsScene->AddActor(circle);
 
 
-	Circle* ball1 = new Circle(glm::vec2(-20, 0), glm::vec2(0), 4.0f, 4, 0.3f, glm::vec4(1, 0, 0, 1));
+	//Circle* ball1 = new Circle(glm::vec2(-20, 0), glm::vec2(0,0), 4.0f, 4, 0.3f, glm::vec4(1, 0, 0, 1));
 	//Circle* ball2 = new Circle(glm::vec2(10, 0), glm::vec2(0), 4.0f, 4, glm::vec4(0, 1, 0, 1));
 	Plane* plane = new Plane(glm::vec2(0, 1), -30, glm::vec4(1, 1, 1, 1));
+	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, glm::vec4(1, 1, 1, 1));
+	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, glm::vec4(1, 1, 1, 1));
+	Plane* plane4 = new Plane(glm::vec2(0.45f, 0.45f), 0, glm::vec4(1, 1, 1, 1));
 
-	physicsScene->AddActor(ball1);
+	//physicsScene->AddActor(ball1);
 	//physicsScene->AddActor(ball2);
 	physicsScene->AddActor(plane);
+	physicsScene->AddActor(plane2);
+	physicsScene->AddActor(plane3);
+	physicsScene->AddActor(plane4);
+
+	/*for (int i = 0; i < 10; i++) {
+		Circle* circle = new Circle(glm::vec2(20 -i*10, 10), glm::vec2(0, 0), 90.0f, 5, 1.0f, glm::vec4(1,0,0, 1));
+		physicsScene->AddActor(circle);
+	}*/
 
 
 	return true;

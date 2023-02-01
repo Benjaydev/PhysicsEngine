@@ -13,7 +13,7 @@ void Rocket::Update(PhysicsScene* scene, float deltaTime) {
 		scene->AddActor(exhaust);
 
 		ship->mass -= removeAmount;
-		ship->ApplyForceToActor(exhaust, force);
+		ship->AddForceToActor(exhaust, force);
 
 		count -= fireRate;
 	}

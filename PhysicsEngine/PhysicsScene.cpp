@@ -1,9 +1,13 @@
 #pragma once
 #include "PhysicsScene.h"
 
-PhysicsScene::PhysicsScene() : gravity(glm::vec2(0, -10))
+float PhysicsScene::fixedDeltaTime = 0.01f;
+glm::vec2 PhysicsScene::gravity = glm::vec2(0, -10);
+
+PhysicsScene::PhysicsScene() 
 {
     fixedDeltaTime = 0.01f;
+    gravity = glm::vec2(0, -10);
 }
 
 PhysicsScene::~PhysicsScene()
@@ -104,6 +108,14 @@ void PhysicsScene::CheckCollisions()
     }
 }
 
+glm::vec2 PhysicsScene::NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, glm::vec2 checkPoint)
+{
+    dir = glm::normalize(dir);
+    glm::vec2 v = checkPoint - linePoint;
+    float d = glm::dot(v, dir);
+    return linePoint + dir * d;
+}
+
 bool PhysicsScene::Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2)
 {
     // try to cast objects to Circle and Circle
@@ -112,31 +124,46 @@ bool PhysicsScene::Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2)
     // if we are successful then test for collision
     if (circle1 != nullptr && circle2 != nullptr)
     {
-        glm::vec2 diff = circle2->position - circle1->position;
+        // Test for other collision
+        glm::vec2 diff = (circle2->position + circle2->velocity * fixedDeltaTime) - (circle1->position + circle1->velocity * 0.01f);
         float sqrMag = glm::dot(diff, diff);
         float combRadi = (circle1->radius + circle2->radius);
 
-        glm::vec2 combinedVel = circle1->velocity + circle2->velocity;
-        glm::vec2 circle1Ratio = circle1->velocity / combinedVel;
-        glm::vec2 circle2Ratio = circle2->velocity / combinedVel;
-
         float intersectionDepth = sqrMag - (combRadi * combRadi);
-        if (intersectionDepth < 0) {
-            // REPLACE 0.01 with staticDeltaTime!
-            circle1->position -= circle1->velocity * circle1Ratio * 0.01f;
-            circle2->position -= circle2->velocity * circle2Ratio * 0.01f;
-
-
+        float dir = glm::dot((circle1->velocity - circle2->velocity), (circle1->position - circle2->position));
+        if (intersectionDepth < 0 && dir < 0) {
+            float coRestitution = (circle1->restitution * circle2->restitution);
+            glm::vec2 staticVec = glm::vec2(0, 0);
             glm::vec2 normal = diff / sqrt(sqrMag);
 
-            float j = (-(1 + (0.9f)) * glm::dot(circle2->velocity - circle1->velocity, normal)) /
-                    (((1 / circle1->mass) + (1 / circle2->mass)) * glm::dot(normal, normal));
 
-            circle1->SetVelocity(circle1->velocity - j * normal / circle1->mass);
-            circle2->SetVelocity(circle2->velocity + j * normal / circle2->mass);
+            // Static-static
+            if (circle1->velocity == staticVec && circle2->velocity == staticVec) {
+                glm::vec2 midPoint = glm::vec2((circle1->position.x + circle2->position.x) / 2, (circle1->position.y + circle2->position.y) / 2);
+                circle1->position.x = midPoint.x + circle1->radius * (circle1->position.x - circle2->position.x) / intersectionDepth;
+                circle1->position.y = midPoint.y + circle1->radius * (circle1->position.y - circle2->position.y) / intersectionDepth;
+                circle2->position.x = midPoint.x + circle2->radius * (circle2->position.x - circle1->position.x) / intersectionDepth;
+                circle2->position.y = midPoint.y + circle2->radius * (circle2->position.y - circle1->position.y) / intersectionDepth;
+            }
+            // Dyanamic-dynamic
+            else {
+                /*float j = (-(1 + (coRestitution)) * glm::dot(circle2->velocity - circle1->velocity, normal)) /
+                    (((1 / circle1->mass) + (1 / circle2->mass)));
+
+                circle1->SetVelocity(circle1->velocity - j * normal / circle1->mass);
+                circle2->SetVelocity(circle2->velocity + j * normal / circle2->mass);*/
+
+                circle1->ResolveCollision(circle2);
+            }
+            circle1 = nullptr;
+            circle2 = nullptr;
+            return true;
+
         }
 
     }
+    circle1 = nullptr;
+    circle2 = nullptr;
     return false;
 }
 
@@ -147,23 +174,18 @@ bool PhysicsScene::Circle2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
     //if we are successful then test for collision
     if (circle != nullptr && plane != nullptr)
     {
-        glm::vec2 collisionNormal = plane->normal;
-        float sphereToPlane = glm::dot(circle->position, plane->normal) - plane->distanceToOrigin - circle->radius;
+        float sphereToPlane = glm::dot((circle->position + circle->velocity * fixedDeltaTime), plane->normal) - plane->distanceToOrigin;
 
+        float intersection = circle->radius - sphereToPlane;
         float velocityOutOfPlane = glm::dot(circle->velocity, plane->normal);
-        if (sphereToPlane < 0 && velocityOutOfPlane < 0)
+        if (intersection > 0 && velocityOutOfPlane < 0)
         {
-
-            circle->SetVelocity(circle->velocity - (1+circle->restitution) * glm::dot(circle->velocity, plane->normal) * plane->normal);
-            //set sphere velocity to zero here
-            //circle->ApplyForce(-circle->velocity * circle->mass);
-
-
-
-
+            plane->ResolveCollision(circle);
             return true;
         }
+
     }
+
     return false;
 }
 

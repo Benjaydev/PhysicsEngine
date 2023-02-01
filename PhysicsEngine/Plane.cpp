@@ -10,8 +10,9 @@ Plane::Plane() :
 Plane::Plane(glm::vec2 _normal, float _distance, glm::vec4 _colour) : 
     PhysicsObject(PLANE) {
     distanceToOrigin = _distance;
-    normal = _normal;
+    normal = glm::normalize(_normal);
     colour = _colour;
+    
 }
 
 
@@ -27,4 +28,19 @@ void Plane::Draw() {
     //aie::Gizmos::add2DLine(start, end, colour);
     aie::Gizmos::add2DTri(start, end, start - normal * 10.0f, colour, colour, colourFade);
     aie::Gizmos::add2DTri(end, end - normal * 10.0f, start - normal * 10.0f, colour, colourFade, colourFade);
+}
+
+void Plane::ResolveCollision(Rigidbody* actor2)
+{
+    /*float coRestitution = (restitution * actor2->restitution);
+    glm::vec2 force = actor2->velocity - (1 + (coRestitution)) * glm::dot(actor2->velocity, normal) * normal;
+
+    actor2->velocity = force;*/
+
+
+    float coRestitution = (restitution * actor2->restitution);
+    float j = ((1 + coRestitution) * glm::dot(actor2->velocity, normal));
+
+
+    actor2->velocity = actor2->velocity - 2 * glm::dot(actor2->velocity, normal) * normal;
 }

@@ -8,6 +8,7 @@ public:
 
     virtual void FixedUpdate(glm::vec2 gravity, float timeStep);
     void ApplyForce(glm::vec2 force);
+    void AddForceToActor(Rigidbody* actor2, glm::vec2 force);
     void ApplyForceToActor(Rigidbody* actor2, glm::vec2 force);
 
     glm::vec2 GetPosition() { return position; }
@@ -16,10 +17,17 @@ public:
     float GetMass() { return mass; }
 
     void SetVelocity(glm::vec2 _velocity) { velocity = _velocity; }
+
+    void ResolveCollision(Rigidbody* actor2);
+
+    float GetPotentialEnergy();
+
     glm::vec2 position;
     glm::vec2 velocity;
     float mass;
     float restitution = 1.0f;
+
+    bool isStatic = false;
 
 protected:
 
