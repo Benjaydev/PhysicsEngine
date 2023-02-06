@@ -118,6 +118,18 @@ glm::vec2 PhysicsScene::NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, g
     return linePoint + dir * d;
 }
 
+
+void PhysicsScene::ApplyContactForces(Rigidbody* body1, Rigidbody* body2, glm::vec2 norm, float pen) {
+    float body2Mass = body2 ? body2->GetMass() : INT_MAX;
+
+    float body1Factor = body2Mass / (body1->GetMass() + body2Mass);
+
+    body1->position = body1->position - body1Factor * norm * pen;
+    if (body2) {
+        body2->position = body2->position + (1 - body1Factor) * norm * pen;
+    }
+}
+
 bool PhysicsScene::Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2)
 {
     // try to cast objects to Circle and Circle
@@ -133,27 +145,22 @@ bool PhysicsScene::Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2)
 
         float intersectionDepth = sqrMag - (combRadi * combRadi);
         float dir = glm::dot((circle1->velocity - circle2->velocity), (circle1->position - circle2->position));
+
         if (intersectionDepth < 0 && dir < 0) {
             float coRestitution = PhysicsEngine::CalculateCoefficientRestitution(circle1->restitution, circle2->restitution);
             glm::vec2 staticVec = glm::vec2(0, 0);
-            glm::vec2 normal = diff / sqrt(sqrMag);
+            float mag = sqrt(sqrMag);
+            glm::vec2 normal = diff / mag;
 
+            float penetration = circle1->radius + circle2->radius - mag;
+            if (penetration > 0)
+            {
+                circle1->ResolveCollision(circle2, 0.5f * (circle1->position + circle2->position), nullptr, penetration);
+                circle1 = nullptr;
+                circle2 = nullptr;
+                return true;
+            }
 
-            // Static-static
-            if (circle1->velocity == staticVec && circle2->velocity == staticVec) {
-                glm::vec2 midPoint = glm::vec2((circle1->position.x + circle2->position.x) / 2, (circle1->position.y + circle2->position.y) / 2);
-                circle1->position.x = midPoint.x + circle1->radius * (circle1->position.x - circle2->position.x) / intersectionDepth;
-                circle1->position.y = midPoint.y + circle1->radius * (circle1->position.y - circle2->position.y) / intersectionDepth;
-                circle2->position.x = midPoint.x + circle2->radius * (circle2->position.x - circle1->position.x) / intersectionDepth;
-                circle2->position.y = midPoint.y + circle2->radius * (circle2->position.y - circle1->position.y) / intersectionDepth;
-            }
-            // Dyanamic-dynamic
-            else {
-                circle1->ResolveCollision(circle2, 0.5f * (circle1->position + circle2->position));
-            }
-            circle1 = nullptr;
-            circle2 = nullptr;
-            return true;
 
         }
 
@@ -176,7 +183,7 @@ bool PhysicsScene::Circle2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
         float velocityOutOfPlane = glm::dot(circle->velocity, plane->normal);
         if (intersection > 0 && velocityOutOfPlane < 0)
         {
-            glm::vec2 contact = circle->position + (plane->normal * circle->radius);
+            glm::vec2 contact = circle->position - (plane->normal * circle->radius);
             plane->ResolveCollision(circle, contact);
             return true;
         }
@@ -275,11 +282,12 @@ bool PhysicsScene::Box2Circle(PhysicsObject* obj1, PhysicsObject* obj2) {
         // Convert back into world coordinates 
         glm::vec2 closestPointOnBoxWorld = box->position + closestPointOnBoxBox.x * box->localX + closestPointOnBoxBox.y * box->localY;
         glm::vec2 circleToBox = circle->position - closestPointOnBoxWorld;
-        if (glm::length(circleToBox) < circle->radius)
+        float penetration = circle->radius - glm::length(circleToBox);
+        if (penetration > 0)
         {
             glm::vec2 direction = glm::normalize(circleToBox);
             glm::vec2 contact = closestPointOnBoxWorld;
-            box->ResolveCollision(circle, contact, &direction);
+            box->ResolveCollision(circle, contact, &direction, penetration);
         }
     }
 
@@ -303,7 +311,7 @@ bool PhysicsScene::Circle2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
             norm = -norm;
         }
         if (pen > 0) {
-            box1->ResolveCollision(box2, contact / (float)numContacts, &norm);
+            box1->ResolveCollision(box2, contact / (float)numContacts, &norm, pen);
         }
         return true;
     }

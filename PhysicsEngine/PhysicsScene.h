@@ -22,6 +22,7 @@ public:
 	float GetFixedDeltaTime() const { return fixedDeltaTime; }
 
 	static glm::vec2 NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, glm::vec2 checkPoint);
+	static void ApplyContactForces(Rigidbody* body1, Rigidbody* body2, glm::vec2 norm, float pen);
 	static bool Plane2Plane(PhysicsObject* obj1, PhysicsObject* obj2) { return false; };
 	static bool Plane2Circle(PhysicsObject* obj1, PhysicsObject* obj2);
 	static bool Plane2Box(PhysicsObject* obj1, PhysicsObject* obj2);

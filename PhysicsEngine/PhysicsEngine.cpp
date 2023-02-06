@@ -10,11 +10,12 @@
 PhysicsEngine* PhysicsEngine::physicsEngine = nullptr;
 
 std::map<std::string, int> PhysicsEngine::configSettings;
+std::map<std::string, float> PhysicsEngine::configValues;
 
-// Coefficient of restitution calculation technique
+// Coefficient calculation techniques
 typedef float(*coRest)(float, float);
 static coRest CoefficientCalculationFunctions[] = {
-	PhysicsEngine::CoRestMult, PhysicsEngine::CoRestMin, PhysicsEngine::CoRestMax
+	PhysicsEngine::CoRestMult, PhysicsEngine::CoRestAve, PhysicsEngine::CoRestMin, PhysicsEngine::CoRestMax
 };
 
 PhysicsEngine::PhysicsEngine() {
@@ -63,14 +64,14 @@ bool PhysicsEngine::startup() {
 	Plane* plane = new Plane(glm::vec2(0, 1), -30, glm::vec4(1, 1, 1, 1));
 	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, glm::vec4(1, 1, 1, 1));
 	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, glm::vec4(1, 1, 1, 1));
-	Plane* plane4 = new Plane(glm::vec2(0.30f, 0.70f), 0, glm::vec4(1, 1, 1, 1));
+	Plane* plane4 = new Plane(glm::vec2(0.30f, 0.70f), -40, glm::vec4(1, 1, 1, 1));
 
 	//physicsScene->AddActor(ball1);
 	//physicsScene->AddActor(ball2);
 	physicsScene->AddActor(plane);
 	physicsScene->AddActor(plane2);
 	physicsScene->AddActor(plane3);
-	//physicsScene->AddActor(plane4);
+	physicsScene->AddActor(plane4);
 
 	/*for (int i = 0; i < 10; i++) {
 		Circle* circle = new Circle(glm::vec2(20 -i*10, 10), glm::vec2(0, 0), 90.0f, 5, 1.0f, glm::vec4(1,0,0, 1));
@@ -108,7 +109,7 @@ void PhysicsEngine::update(float deltaTime) {
 
 		glm::vec2 worldPos = GetWorldSpacePoint(x, y);
 		glm::vec2 screenPos = GetScreenSpacePoint(worldPos.x, worldPos.y);
-		Circle* circle = new Circle(glm::vec2(worldPos.x, worldPos.y), glm::vec2(-10, 10), 10.0f, 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+		Circle* circle = new Circle(glm::vec2(worldPos.x, worldPos.y), glm::vec2(0, 0), 10.0f, 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
 		physicsScene->AddActor(circle);
 	}
 	if (input->wasKeyPressed(aie::INPUT_KEY_S)) {
@@ -119,7 +120,8 @@ void PhysicsEngine::update(float deltaTime) {
 
 		glm::vec2 worldPos = GetWorldSpacePoint(x, y);
 		glm::vec2 screenPos = GetScreenSpacePoint(worldPos.x, worldPos.y);
-		Box* box = new Box(glm::vec2(worldPos.x, worldPos.y), glm::vec2(10, 5), glm::vec2(0, 0), 90.0f, 0.5f, glm::vec4(1, 0, 0, 1));
+		Box* box = new Box(glm::vec2(worldPos.x, worldPos.y), glm::vec2(10, 5), glm::vec2(0, 0), 90.0f, 1.0f, glm::vec4(1, 0, 0, 1));
+
 		physicsScene->AddActor(box);
 	}
 
@@ -178,8 +180,19 @@ void PhysicsEngine::LoadConfig() {
 				std::string value;
 				if (std::getline(iss, value))
 				{
-					int i = std::stoi(value);
-					configSettings.emplace(key, i);
+					// Value setting
+					if (key.find("V_") != std::string::npos) {
+						// Remove prefix from key
+						key.erase(0, 2);
+						float v = std::stof(value);
+						configValues.emplace(key, v);
+					}
+					// Int setting
+					else {
+						int i = std::stoi(value);
+						configSettings.emplace(key, i);
+					}
+
 				}
 			}
 		}
@@ -191,6 +204,10 @@ void PhysicsEngine::LoadConfig() {
 float PhysicsEngine::CalculateCoefficientRestitution(float restitution1, float restitution2) {
 
 	return CoefficientCalculationFunctions[configSettings["RESTITUTION_CALC"]](restitution1, restitution2);
+}
 
+float PhysicsEngine::CalculateCoefficientStaticFriction(float restitution1, float restitution2) {
+
+	return CoefficientCalculationFunctions[configSettings["STATFRICTION_CALC"]](restitution1, restitution2);
 }
 

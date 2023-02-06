@@ -25,7 +25,9 @@ public:
 	glm::vec2 GetWorldSpacePoint(float xScreen, float yScreen);
 
 	static float CalculateCoefficientRestitution(float restitution1, float restitution2);
+	static float CalculateCoefficientStaticFriction(float restitution1, float restitution2);
 	static float CoRestMult(float restitution1, float restitution2) { return restitution1 * restitution2; }
+	static float CoRestAve(float restitution1, float restitution2) { return (restitution1 + restitution2)/2.0f; }
 	static float CoRestMin(float restitution1, float restitution2) { return fmin(restitution1, restitution2); }
 	static float CoRestMax(float restitution1, float restitution2) { return fmax(restitution1, restitution2); }
 
@@ -33,6 +35,7 @@ public:
 
 
 	static std::map<std::string, int> configSettings;
+	static std::map<std::string, float> configValues;
 
 
 protected:

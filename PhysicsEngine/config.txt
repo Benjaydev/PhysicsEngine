@@ -1,2 +1,7 @@
-# How should the coefficient of restitution be calculated 0 - Multiply | 1 - Min | 2 - Max
+# How should the coefficient of restitution be calculated | 0 - Multiply | 1 - Average | 2 - Min | 3 - Max
 RESTITUTION_CALC=0
+# How should the coefficient of static friction be calculated | 0 - Multiply | 1 - Average | 2 - Min | 3 - Max
+STATFRICTION_CALC=0
+
+V_MIN_LINEAR_THRESHOLD=0.01
+V_MIN_ANGULAR_THRESHOLD=0.1

@@ -14,13 +14,14 @@ public:
     glm::vec2 GetPosition() { return position; }
     float GetOrientatation() { return orientation; }
     glm::vec2 GetVelocity() { return velocity; }
-    float GetMass() { return mass; }
+    float GetMass() { return isKinematic ? INT_MAX : mass; }
 
-    float GetMoment() { return moment; }
+    float GetMoment() { return isKinematic ? INT_MAX : moment; }
 
     void SetVelocity(glm::vec2 _velocity) { velocity = _velocity; }
 
-    void ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2* collisionNormal = nullptr);
+
+    void ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2* collisionNormal = nullptr, float pen = 0);
 
     float GetPotentialEnergy();
 
@@ -28,12 +29,13 @@ public:
     glm::vec2 velocity;
     float mass;
     float restitution = 1.0f;
+    float linearDrag = 0.3f;
+    float angularDrag = 0.3f;
 
     float orientation = 0.f;
     float angularVelocity = 0.f;
     float moment = 1.f;
 
 
-
-    bool isStatic = false;
+    bool isKinematic = false;
 };
