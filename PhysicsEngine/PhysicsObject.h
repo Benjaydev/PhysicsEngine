@@ -6,7 +6,7 @@ enum ShapeType {
     NONE = -1,
     PLANE = 0,
     CIRCLE,
-    //BOX,
+    BOX,
     SHAPE_COUNT
 
 };
@@ -25,5 +25,6 @@ public:
     ShapeType GetShapeID() { return shapeID; };
 
 protected:
+
     ShapeType shapeID = (ShapeType)(-1);
 };

@@ -1,3 +1,4 @@
+#pragma once
 #include "Rigidbody.h"
 
 class Plane : public PhysicsObject
@@ -14,7 +15,7 @@ public:
     glm::vec2 GetNormal() { return normal; }
     float GetDistance() { return distanceToOrigin; }
 
-    void ResolveCollision(Rigidbody* actor2);
+    void ResolveCollision(Rigidbody* actor2, glm::vec2 contact);
 
     glm::vec2 normal;
     float distanceToOrigin;

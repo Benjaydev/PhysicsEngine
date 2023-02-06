@@ -167,6 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Box.cpp" />
     <ClCompile Include="Circle.cpp" />
     <ClCompile Include="PhysicsEngine.cpp" />
     <ClCompile Include="main.cpp" />
@@ -177,6 +178,7 @@
     <ClCompile Include="Rocket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Box.h" />
     <ClInclude Include="Circle.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="PhysicsObject.h" />
@@ -184,6 +186,11 @@
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Rigidbody.h" />
     <ClInclude Include="Rocket.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="config.txt">
+      <DeploymentContent>true</DeploymentContent>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

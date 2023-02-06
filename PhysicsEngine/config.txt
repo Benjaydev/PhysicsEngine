@@ -1,0 +1,2 @@
+# How should the coefficient of restitution be calculated 0 - Multiply | 1 - Min | 2 - Max
+RESTITUTION_CALC=0

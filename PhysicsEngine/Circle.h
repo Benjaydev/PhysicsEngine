@@ -7,6 +7,7 @@ public:
         float _mass, float _radius, float _restitution, glm::vec4 _colour);
     ~Circle();
 
+    void FixedUpdate(glm::vec2 gravity, float timeStep) override;
     void Draw() override;
 
     float GetRadius() { return radius; }
@@ -15,6 +16,5 @@ public:
     float radius;
 
 protected:
-
     glm::vec4 colour;
 };

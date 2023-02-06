@@ -1,4 +1,6 @@
+#pragma once
 #include "Plane.h"
+#include "PhysicsEngine.h"
 
 Plane::Plane() : 
     PhysicsObject(PLANE) {
@@ -30,17 +32,22 @@ void Plane::Draw() {
     aie::Gizmos::add2DTri(end, end - normal * 10.0f, start - normal * 10.0f, colour, colourFade, colourFade);
 }
 
-void Plane::ResolveCollision(Rigidbody* actor2)
+void Plane::ResolveCollision(Rigidbody* actor2, glm::vec2 contact)
 {
-    /*float coRestitution = (restitution * actor2->restitution);
-    glm::vec2 force = actor2->velocity - (1 + (coRestitution)) * glm::dot(actor2->velocity, normal) * normal;
+    glm::vec2 localContact = contact - actor2->position;
+    glm::vec2 vRel = actor2->velocity + actor2->angularVelocity * glm::vec2(-localContact.y, localContact.x);
+    float velocityIntoPlane = glm::dot(vRel, normal);
 
-    actor2->velocity = force;*/
+    float coRestitution = PhysicsEngine::CalculateCoefficientRestitution(restitution, actor2->restitution);
+
+    float r = glm::dot(localContact, glm::vec2(normal.y, -normal.x));
+
+    float mass0 = 1.0f / (1.0f / actor2->GetMass() + (r * r) / actor2->GetMoment());
 
 
-    float coRestitution = (restitution * actor2->restitution);
-    float j = ((1 + coRestitution) * glm::dot(actor2->velocity, normal));
+    float j = -(1 + coRestitution) * velocityIntoPlane * mass0;
 
+    glm::vec2 force = normal * j;
 
-    actor2->velocity = actor2->velocity - 2 * glm::dot(actor2->velocity, normal) * normal;
+    actor2->ApplyForce(force, contact - actor2->position);
 }
