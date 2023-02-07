@@ -18,3 +18,9 @@ void Rocket::Update(PhysicsScene* scene, float deltaTime) {
 		count -= fireRate;
 	}
 }
+
+
+Rocket::~Rocket() {
+	delete ship;
+	ship = nullptr;
+}

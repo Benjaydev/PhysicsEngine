@@ -5,7 +5,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 #include "PhysicsScene.h"
-#include "Rocket.h"
+
 
 class PhysicsEngine : public aie::Application {
 public:
@@ -33,16 +33,42 @@ public:
 
 	static void LoadConfig();
 
+	void Rope(int num, glm::vec2 position, bool isKinetic = true);
 
 	static std::map<std::string, int> configSettings;
 	static std::map<std::string, float> configValues;
 
+	static void DrawText(const char* text, glm::vec2 worldPos);
 
-protected:
-	aie::Renderer2D*	m_2dRenderer = nullptr;
-	aie::Font*			m_font = nullptr;
+	float spawnSize = 1.f;
+	int ropeSize = 1;
+
+	glm::vec2 dragStart = glm::vec2(0);
+	glm::vec2 dragEnd = glm::vec2(0);
+
+	glm::vec2 middleMouseDragStart = glm::vec2(0);
+	glm::vec2 middleMouseDragDist = glm::vec2(0);
+	double lastScrollValue = 0.0f;
+
+	bool middleMouseDrag = false;
+	bool circleDrag = false;
+	bool boxDrag = false;
+	bool planeDrag = false;
+	bool planeClockwise = true;
+
+	bool shouldErase = false;
+
+
+	float orthoSize = 100;
+	glm::vec2 orthoCenter = glm::vec2(0, 0);
+
 	PhysicsScene* physicsScene = nullptr;
 
+protected:
+	aie::Renderer2D* m_2dRenderer = nullptr;
+	aie::Font* m_font = nullptr;
+
+
 	float aspectRatio = 0.f;
-	glm::vec2 orthoRange = glm::vec2(-100, 100);
+
 };

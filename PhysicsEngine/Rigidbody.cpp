@@ -3,9 +3,6 @@
 #include "PhysicsScene.h"
 #include "PhysicsEngine.h"
 
-
-
-
 Rigidbody::Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocity, float _orientation, float _mass, float _restitution)
 {
     shapeID = _shapeID;
@@ -14,21 +11,62 @@ Rigidbody::Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocit
     orientation = _orientation;
     mass = _mass;
     restitution = _restitution;
+    localX = glm::vec2(0);
+    localY = glm::vec2(0);
+}
+
+Rigidbody::Rigidbody()
+{
+    shapeID = NONE;
+    position = glm::vec2(0);
+    velocity = glm::vec2(0);;
+    orientation = 0;
+    mass = 0;
+    restitution = 0;
+    localX = glm::vec2(0);
+    localY = glm::vec2(0);
 }
 
 Rigidbody::~Rigidbody()
 {
 }
 
+void Rigidbody::Draw() {
+    // Show gravity
+    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
+        aie::Gizmos::add2DLine(position, position + PhysicsScene::gravity, glm::vec4(1, 0.5f, 0, 1));
+        aie::Gizmos::add2DLine(position, position + velocity, glm::vec4(1, 1, 0, 1));
+
+        aie::Gizmos::add2DLine(position, position + (GetPotentialEnergy() / 1000), glm::vec4(1, 1, 1, 1));
+    }
+
+}
+
+
 void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
 {
+    // Delete self after 2 frames without collision if an eraser
+    if (eraser) {
+        frameCount++;
+        if (frameCount >= 2) {
+            PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
+        }
+    }
+
+    //store the local axes 
+    float cs = cosf(orientation);
+    float sn = sinf(orientation);
+    localX = glm::normalize(glm::vec2(cs, sn));
+    localY = glm::normalize(glm::vec2(-sn, cs));
+
     if (isKinematic) {
         velocity = glm::vec2(0);
         angularVelocity = 0;
         return;
     }
+
     position += velocity * timeStep;
-    ApplyForce(gravity * mass * timeStep, glm::vec2(0, 0));
+    ApplyForce(gravity * mass * timeStep, position);
 
     orientation += angularVelocity * timeStep;
 
@@ -44,10 +82,15 @@ void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
 
 }
 
+glm::vec2 Rigidbody::ToWorld(glm::vec2 point) {
+    return position + (localX * point.x + localY * point.y);
+}
+
 void Rigidbody::ApplyForce(glm::vec2 force, glm::vec2 pos) {
     if (!isKinematic) {
         velocity += force / GetMass();
-        angularVelocity += (force.y * pos.x - force.x * pos.y) / GetMoment();
+        glm::vec2 offset = pos - position;
+        angularVelocity += (force.y * offset.x - force.x * offset.y) / GetMoment();
     }
 }
 
@@ -64,20 +107,20 @@ void Rigidbody::ApplyForceToActor(Rigidbody* actor2, glm::vec2 force)
 
 void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2* collisionNormal, float pen)
 {
-    //glm::vec2 normal = glm::normalize(actor2->position + actor2->velocity*0.01f - position + velocity * 0.01f);
+    // Object should erase other object it collides with
+    if (eraser) {
+        frameCount = 0;
+        PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(actor2);
+        return;
+    }
+    else if (actor2->eraser) {
+        actor2->frameCount = 0;
+        PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
+        return;
+    }
+
     glm::vec2 normal = glm::normalize(collisionNormal ? *collisionNormal : actor2->position - position);
 
-    //// One rigidbody is static
-    //if (isKinematic || actor2->isKinematic) {
-    //    Rigidbody* staticObj = isKinematic ? this : actor2;
-    //    Rigidbody* nonStaticObj = isKinematic ? actor2 : this;
-
-    //    float coRestitution = PhysicsEngine::CalculateCoefficientRestitution(staticObj->restitution, nonStaticObj->restitution);
-    //    float j = glm::dot(-(1 + coRestitution) * (nonStaticObj->velocity), normal) / (1 / nonStaticObj->GetMass());
-
-    //    glm::vec2 force = normal * j;
-    //    nonStaticObj->ApplyForce(force, contact - nonStaticObj->position);
-    //}
     glm::vec2 perp(normal.y, -normal.x);
 
     float r1 = glm::dot(contact - position, -perp);
@@ -93,8 +136,8 @@ void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2
 
         glm::vec2 force = (1.0f + 1) * mass1 * mass2 / (mass1 + mass2) * (v1 - v2) * normal;
 
-        ApplyForce(-force, contact - position);
-        actor2->ApplyForce(force, contact - actor2->position);
+        ApplyForce(-force, contact);
+        actor2->ApplyForce(force, contact);
     }
 
     if (pen > 0) {

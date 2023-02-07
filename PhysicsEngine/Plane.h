@@ -5,7 +5,7 @@ class Plane : public PhysicsObject
 {
 public:
     Plane();
-    Plane(glm::vec2 _normal, float _distance, glm::vec4 _colour);
+    Plane(glm::vec2 _normal, float _distance, float _restitution, glm::vec4 _colour);
     ~Plane();
 
     void FixedUpdate(glm::vec2 gravity, float timeStep) override {};

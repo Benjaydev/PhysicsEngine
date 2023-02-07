@@ -9,17 +9,18 @@ Plane::Plane() :
     colour = glm::vec4(1, 1, 1, 1);
 }
 
-Plane::Plane(glm::vec2 _normal, float _distance, glm::vec4 _colour) : 
+Plane::Plane(glm::vec2 _normal, float _distance, float _restitution, glm::vec4 _colour) :
     PhysicsObject(PLANE) {
     distanceToOrigin = _distance;
     normal = glm::normalize(_normal);
     colour = _colour;
+    restitution = _restitution;
     
 }
 
 
 void Plane::Draw() {
-    float lineSegmentLength = 300;
+    float lineSegmentLength = PhysicsEngine::physicsEngine->orthoSize*2;
     glm::vec2 centerPoint = normal * distanceToOrigin;
     // easy to rotate normal through 90 degrees around z
     glm::vec2 parallel(normal.y, -normal.x);
@@ -30,10 +31,21 @@ void Plane::Draw() {
     //aie::Gizmos::add2DLine(start, end, colour);
     aie::Gizmos::add2DTri(start, end, start - normal * 10.0f, colour, colour, colourFade);
     aie::Gizmos::add2DTri(end, end - normal * 10.0f, start - normal * 10.0f, colour, colourFade, colourFade);
+
+    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
+        aie::Gizmos::add2DLine(centerPoint, centerPoint + normal * PhysicsEngine::physicsEngine->orthoSize * 0.02f, glm::vec4(1, 0, 0, 1));
+    }
 }
 
 void Plane::ResolveCollision(Rigidbody* actor2, glm::vec2 contact)
 {
+    if (actor2->eraser) {
+        actor2->frameCount = 0;
+        PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
+        return;
+    }
+
+
     glm::vec2 localContact = contact - actor2->position;
     glm::vec2 vRel = actor2->velocity + actor2->angularVelocity * glm::vec2(-localContact.y, localContact.x);
     float velocityIntoPlane = glm::dot(vRel, normal);
@@ -49,7 +61,7 @@ void Plane::ResolveCollision(Rigidbody* actor2, glm::vec2 contact)
 
     glm::vec2 force = normal * j;
 
-    actor2->ApplyForce(force, contact - actor2->position);
+    actor2->ApplyForce(force, contact);
 
     float pen = glm::dot(contact, normal) - distanceToOrigin;
     PhysicsScene::ApplyContactForces(actor2, nullptr, normal, pen);

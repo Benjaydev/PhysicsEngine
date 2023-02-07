@@ -1,5 +1,7 @@
+#pragma once
 #include "Circle.h"
 #include "Application.h"
+#include "PhysicsEngine.h"
 
 Circle::Circle(glm::vec2 _position, glm::vec2 _velocity, float _mass, float _radius, float _restitution, glm::vec4 _colour) :
     Rigidbody(CIRCLE, _position, _velocity, 0, _mass, _restitution)
@@ -24,5 +26,11 @@ void Circle::Draw()
         radius;
 
     aie::Gizmos::add2DCircle(position, radius, 12, colour);
-    aie::Gizmos::add2DLine(position, position + end, glm::vec4(1, 1, 1, 1));
+
+    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
+        aie::Gizmos::add2DLine(position, position + end, glm::vec4(1, 1, 1, 1));
+    }
+
+
+    Rigidbody::Draw();
 }

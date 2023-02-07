@@ -19,8 +19,6 @@ public:
 	glm::vec2 extents; 
 	glm::vec4 colour;
 
-	// Store the local x,y axes of the box based on its angle of rotation 
-	glm::vec2 localX;
-	glm::vec2 localY;
+
 
 };

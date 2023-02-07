@@ -10,25 +10,12 @@ Box::Box(glm::vec2 _position, glm::vec2 _extents, glm::vec2 _velocity, float _ma
 
 void Box::FixedUpdate(glm::vec2 gravity, float timeStep) {
 	Rigidbody::FixedUpdate(gravity, timeStep);
-
 	// Calculate moment of inertia
-	//moment = (GetWidth() * pow(GetHeight(), 3)) / 12;
 	moment = (1.f / 12.f) * mass * GetWidth() * GetHeight();
-	//moment = (2.f / 5.f) * mass * (radius * radius);
 
-	//store the local axes 
-	float cs = cosf(orientation);
-	float sn = sinf(orientation);
-	localX = glm::normalize(glm::vec2(cs, sn));
-	localY = glm::normalize(glm::vec2(-sn, cs));
 }
 
 void Box::Draw() {
-	// if only using rotation 
-	// glm::mat4 transform = glm::rotate(m_rotation, glm::vec3(0, 0, 1)); 
-	// aie::Gizmos::add2DAABBFilled(getCenter(),  
-	//        m_extents, m_colour, &transform); 
-
 	// draw using local axes 
 	glm::vec2 p1 = position - localX * extents.x - localY * extents.y;
 	glm::vec2 p2 = position + localX * extents.x - localY * extents.y;
@@ -36,6 +23,9 @@ void Box::Draw() {
 	glm::vec2 p4 = position + localX * extents.x + localY * extents.y;
 	aie::Gizmos::add2DTri(p1, p2, p4, colour);
 	aie::Gizmos::add2DTri(p1, p4, p3, colour);
+
+
+	Rigidbody::Draw();
 }
 
 

@@ -1,12 +1,15 @@
 #pragma once
 #include "PhysicsObject.h"
 
+
 class Rigidbody : public PhysicsObject {
 public:
     Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocity, float _orientation, float _mass, float _restitution);
+    Rigidbody();
     ~Rigidbody();
 
     virtual void FixedUpdate(glm::vec2 gravity, float timeStep);
+    void Draw() override;
     void ApplyForce(glm::vec2 force, glm::vec2 pos);
     void AddForceToActor(Rigidbody* actor2, glm::vec2 force);
     void ApplyForceToActor(Rigidbody* actor2, glm::vec2 force);
@@ -25,6 +28,8 @@ public:
 
     float GetPotentialEnergy();
 
+    glm::vec2 ToWorld(glm::vec2 point);
+
     glm::vec2 position;
     glm::vec2 velocity;
     float mass;
@@ -36,6 +41,12 @@ public:
     float angularVelocity = 0.f;
     float moment = 1.f;
 
+    // Store the local x,y axes of the box based on its angle of rotation 
+    glm::vec2 localX;
+    glm::vec2 localY;
 
     bool isKinematic = false;
+    bool eraser = false;
+
+    int frameCount = 0;
 };

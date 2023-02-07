@@ -14,6 +14,8 @@ public:
 
 	void AddActor(PhysicsObject* actor);
 	void RemoveActor(PhysicsObject* actor);
+	void QueueDestroy(PhysicsObject* actor);
+	void DestroyAllQueued();
 	void Update(float dt);
 	void Draw();
 	void CheckCollisions();
@@ -41,5 +43,6 @@ public:
 protected:
 
 	std::vector<PhysicsObject*> sceneActors;
+	std::vector<PhysicsObject*> destroyQueue;
 };
 

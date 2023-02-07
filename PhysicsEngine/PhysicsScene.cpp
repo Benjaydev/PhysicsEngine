@@ -17,6 +17,7 @@ PhysicsScene::~PhysicsScene()
     {
         delete pActor;
     }
+    sceneActors.clear();
 }
 
 void PhysicsScene::AddActor(PhysicsObject* actor)
@@ -30,8 +31,20 @@ void PhysicsScene::RemoveActor(PhysicsObject* actor)
     if (iter != sceneActors.end()) {
         sceneActors.erase(iter);
     }
-
 }
+
+void PhysicsScene::QueueDestroy(PhysicsObject* actor)
+{
+    destroyQueue.push_back(actor);
+}
+
+void PhysicsScene::DestroyAllQueued()
+{
+    for (PhysicsObject* actor : destroyQueue) {
+        RemoveActor(actor);
+    }
+}
+
 void PhysicsScene::Draw()
 {
     for (PhysicsObject* pActor : sceneActors) {
@@ -41,7 +54,7 @@ void PhysicsScene::Draw()
 
 
 // function pointer array for doing our collisions
-typedef bool(*fn)(PhysicsObject*, PhysicsObject*);
+typedef bool(*CollisionFn)(PhysicsObject*, PhysicsObject*);
 
 
 /*
@@ -53,7 +66,7 @@ Row = 2nd object
 
 
 */
-static fn collisionFunctionArray[] =
+static CollisionFn collisionFunctionArray[] =
 {
     PhysicsScene::Plane2Plane,  PhysicsScene::Plane2Circle, PhysicsScene::Plane2Box,
     PhysicsScene::Circle2Plane, PhysicsScene::Circle2Circle, PhysicsScene::Circle2Box,
@@ -79,6 +92,8 @@ void PhysicsScene::Update(float dt)
 
 
         CheckCollisions();
+
+        DestroyAllQueued();
     }
 }
 
@@ -98,9 +113,14 @@ void PhysicsScene::CheckCollisions()
             int shapeId1 = object1->GetShapeID();
             int shapeId2 = object2->GetShapeID();
 
+
+            if (shapeId1 < 0 || shapeId2 < 0) {
+                continue;
+            }
+
             // using function pointers
             int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
-            fn collisionFunctionPtr = collisionFunctionArray[functionIdx];
+            CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
             if (collisionFunctionPtr != nullptr)
             {
                 // did a collision occur?

@@ -5,7 +5,7 @@
 #include "Input.h"
 #include "Gizmos.h"
 #include <glm/ext.hpp>
-
+#include "Spring.h"
 
 PhysicsEngine* PhysicsEngine::physicsEngine = nullptr;
 
@@ -19,16 +19,18 @@ static coRest CoefficientCalculationFunctions[] = {
 };
 
 PhysicsEngine::PhysicsEngine() {
-
+	LoadConfig();
 }
 
 PhysicsEngine::~PhysicsEngine() {
-
+	m_font = nullptr;
+	delete physicsScene;
+	physicsScene = nullptr;
+	physicsEngine = nullptr;
 }
 
 
 bool PhysicsEngine::startup() {
-	
 
 	physicsEngine = this;
 
@@ -43,44 +45,46 @@ bool PhysicsEngine::startup() {
 	physicsScene->gravity = glm::vec2(0, -9.8f);
 	physicsScene->SetFixedDeltaTime(0.01f);
 
-	aie::Gizmos::create(0, 0, 100, 2000);
+	aie::Gizmos::create(0, 0, configValues["MAX_2D_LINES"], configValues["MAX_2D_TRIS"]);
 
 
-	//Circle* circle;
-	//Circle* circle2;
-	//circle = new Circle(glm::vec2(0, 0), glm::vec2(10, 30), 90.0f, 10.0f, 0.5f, glm::vec4(1, 0, 0, 1));
-	//circle2 = new Circle(glm::vec2(40, 0), glm::vec2(-10, 10), 90.0f, 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
-	//physicsScene->AddActor(circle);
-	//physicsScene->AddActor(circle2);
-	//physicsScene->AddActor(circle);
+	Plane* plane = new Plane(glm::vec2(0, 1), -30, 0.f, glm::vec4(1, 1, 1, 1));
+	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, 0.f, glm::vec4(1, 1, 1, 1));
+	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, 0.f, glm::vec4(1, 1, 1, 1));
+	Plane* plane4 = new Plane(glm::vec2(0, 1.f), -40, 0.f, glm::vec4(1, 1, 1, 1));
 
-	//Box* box = new Box(glm::vec2(0, 0), glm::vec2(10, 5), glm::vec2(0, 0), 90.0f, 0.5f, glm::vec4(1, 0, 0, 1));
-	//box->angularVelocity = 2.f;
-	//physicsScene->AddActor(box);
-
-
-	//Circle* ball1 = new Circle(glm::vec2(-20, 0), glm::vec2(0,0), 4.0f, 4, 0.3f, glm::vec4(1, 0, 0, 1));
-	//Circle* ball2 = new Circle(glm::vec2(10, 0), glm::vec2(0), 4.0f, 4, glm::vec4(0, 1, 0, 1));
-	Plane* plane = new Plane(glm::vec2(0, 1), -30, glm::vec4(1, 1, 1, 1));
-	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, glm::vec4(1, 1, 1, 1));
-	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, glm::vec4(1, 1, 1, 1));
-	Plane* plane4 = new Plane(glm::vec2(0.30f, 0.70f), -40, glm::vec4(1, 1, 1, 1));
-
-	//physicsScene->AddActor(ball1);
-	//physicsScene->AddActor(ball2);
 	physicsScene->AddActor(plane);
 	physicsScene->AddActor(plane2);
 	physicsScene->AddActor(plane3);
 	physicsScene->AddActor(plane4);
 
-	/*for (int i = 0; i < 10; i++) {
-		Circle* circle = new Circle(glm::vec2(20 -i*10, 10), glm::vec2(0, 0), 90.0f, 5, 1.0f, glm::vec4(1,0,0, 1));
-		physicsScene->AddActor(circle);
-	}*/
 
-	LoadConfig();
 	return true;
 }
+
+void PhysicsEngine::DrawText(const char* text, glm::vec2 worldPos) {
+	physicsEngine->m_2dRenderer->begin();
+	glm::vec2 screenPos = physicsEngine->GetScreenSpacePoint(worldPos.x, worldPos.y);
+	physicsEngine->m_2dRenderer->drawText(physicsEngine->m_font, text, screenPos.x, screenPos.y);
+	physicsEngine->m_2dRenderer->end();
+}
+ 
+void PhysicsEngine::Rope(int num, glm::vec2 position, bool isKinetic) {
+
+	Circle* prev = nullptr;
+	for (int i = 0; i < num; i++)
+	{
+		// spawn a sphere to the right and below the previous one, so that the whole rope acts under gravityand swings
+		Circle* circle = new Circle(glm::vec2(position.x, position.y - i * 5), glm::vec2(0), 10.f, 2.f, 1.f, glm::vec4(1,0, 0, 1));
+		if (i == 0)
+			circle->isKinematic = isKinetic;
+		physicsScene->AddActor(circle);
+		if (prev)
+			physicsScene->AddActor(new Spring(circle, prev, 500, 10, 7));
+		prev = circle;
+	}
+}
+
 
 void PhysicsEngine::shutdown() {
 
@@ -97,34 +101,132 @@ void PhysicsEngine::update(float deltaTime) {
 
 	if (physicsScene != nullptr) {
 		physicsScene->Update(deltaTime);
+
 		physicsScene->Draw();
+
 	}
 
+	if (input->wasKeyPressed(aie::INPUT_KEY_R)) {
+		LoadConfig();
+	}
 
-	if (input->wasKeyPressed(aie::INPUT_KEY_C)) {
-		int x = 0;
-		int y = 0;
-			
-		input->getMouseXY(&x, &y);
+	if (input->wasKeyPressed(aie::INPUT_KEY_UP)) {
+		ropeSize++;
+	}
+	if (input->wasKeyPressed(aie::INPUT_KEY_DOWN)) {
+		ropeSize--;
+	}
 
-		glm::vec2 worldPos = GetWorldSpacePoint(x, y);
-		glm::vec2 screenPos = GetScreenSpacePoint(worldPos.x, worldPos.y);
-		Circle* circle = new Circle(glm::vec2(worldPos.x, worldPos.y), glm::vec2(0, 0), 10.0f, 10.0f, 1.0f, glm::vec4(0, 1, 0, 1));
+	int x = 0;
+	int y = 0;
+
+	input->getMouseXY(&x, &y);
+
+	glm::vec2 worldPos = GetWorldSpacePoint(x, y);
+
+	if (input->wasKeyPressed(aie::INPUT_KEY_X)) {
+		Rope(ropeSize, worldPos, true);
+	}
+	if (input->wasKeyPressed(aie::INPUT_KEY_Z)) {
+		Rope(ropeSize, worldPos, false);
+	}
+
+	shouldErase = input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT);
+
+	// Circle drag
+	if(input->isKeyDown(aie::INPUT_KEY_C) && input->isMouseButtonDown(0)){
+
+		if (!circleDrag) {
+			dragStart = worldPos;
+			circleDrag = true;
+		}
+		dragEnd = worldPos;
+	}
+	// If drag stops
+	else if(circleDrag) {
+		circleDrag = false;
+
+		float radius = glm::length(dragEnd - dragStart) * 0.5f;
+		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+
+		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f,radius), 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
+		circle->eraser = shouldErase;
 		physicsScene->AddActor(circle);
 	}
-	if (input->wasKeyPressed(aie::INPUT_KEY_S)) {
-		int x = 0;
-		int y = 0;
 
-		input->getMouseXY(&x, &y);
+	// Square drag
+	if (input->isKeyDown(aie::INPUT_KEY_S) && input->isMouseButtonDown(0)) {
 
-		glm::vec2 worldPos = GetWorldSpacePoint(x, y);
-		glm::vec2 screenPos = GetScreenSpacePoint(worldPos.x, worldPos.y);
-		Box* box = new Box(glm::vec2(worldPos.x, worldPos.y), glm::vec2(10, 5), glm::vec2(0, 0), 90.0f, 1.0f, glm::vec4(1, 0, 0, 1));
+		if (!boxDrag) {
+			dragStart = worldPos;
+			boxDrag = true;
+		}
+		dragEnd = worldPos;
+	}
+	// If drag stops
+	else if (boxDrag) {
+		boxDrag = false;
 
+		glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
+		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+
+		Box* box = new Box(center, glm::vec2(fmax(0.1f,abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
+		box->eraser = shouldErase;
 		physicsScene->AddActor(box);
 	}
 
+	// Plane drag
+	if (input->isKeyDown(aie::INPUT_KEY_Q) && input->isMouseButtonDown(0)) {
+
+		if (!planeDrag) {
+			dragStart = worldPos;
+			planeDrag = true;
+		}
+		dragEnd = worldPos;
+	}
+	// If drag stops
+	else if (planeDrag) {
+		planeDrag = false;
+
+		glm::vec2 diff = (dragEnd - dragStart);
+		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+		glm::vec2 toOrigin = glm::vec2(0, 0) - center;		
+		float dir = (planeClockwise ? 1.f : -1.f);
+		glm::vec2 normal = dir * glm::normalize(glm::vec2(diff.y, -diff.x));
+
+		float dist = -glm::dot(toOrigin, normal);
+
+		Plane* plane = new Plane(normal, dist, 0.f, glm::vec4(1, 1, 1, 1));
+		//box->eraser = shouldErase;
+		physicsScene->AddActor(plane);
+	}
+
+	if (input->wasKeyPressed(aie::INPUT_KEY_TAB)) {
+		planeClockwise = !planeClockwise;
+	}
+
+
+
+	if (input->isMouseButtonDown(2)) {
+		if (!middleMouseDrag) {
+			middleMouseDragStart = worldPos;
+			middleMouseDrag = true;
+		}
+
+		middleMouseDragDist = (worldPos - middleMouseDragStart);
+	}
+	else if (middleMouseDrag) {
+		middleMouseDrag = false;
+		orthoCenter -= middleMouseDragDist;
+		middleMouseDragDist = glm::vec2(0);
+	}
+
+	double dir = input->getMouseScroll();
+	if (dir != lastScrollValue) {
+		double deltaDir = dir - lastScrollValue;
+		lastScrollValue = dir;
+		orthoSize = fmax(1, orthoSize - deltaDir * configValues["SCROLL_SENSITIVITY"]);
+	}
 
 	// exit the application
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
@@ -135,37 +237,98 @@ void PhysicsEngine::update(float deltaTime) {
 
 void PhysicsEngine::draw() {
 
-	// wipe the screen to the background colour
-	clearScreen();
-
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
+
+	if (circleDrag) {
+		float radius = glm::length(dragEnd - dragStart) * 0.5f;
+		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+
+		aie::Gizmos::add2DCircle(center, radius, 12, glm::vec4(1, 1, 1, 0.5f));
+
+		char info[64];
+		sprintf_s(info, 64, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
+		m_2dRenderer->drawText(m_font, info, 5, 10);
+	}
+	else if (boxDrag) {
+		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+		glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
+		glm::vec2 absDiff = glm::vec2(abs(diff.x), abs(diff.y));
+		aie::Gizmos::add2DAABBFilled(center, absDiff, glm::vec4(1, 1, 1, 0.5f));
+
+		char info[64];
+		sprintf_s(info, 64, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
+		m_2dRenderer->drawText(m_font, info, 5, 10);
+	}
+	else if (planeDrag) {
+		glm::vec2 diff = (dragEnd - dragStart);
+		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+		glm::vec2 toOrigin = glm::vec2(0, 0) - center;
+		float dir = (planeClockwise ? 1.f : -1.f);
+		glm::vec2 normal = dir * glm::normalize(glm::vec2(diff.y, -diff.x));
+
+
+		float dist = -glm::dot(toOrigin, normal);
+
+		// Draw plane
+		aie::Gizmos::add2DLine(dragStart, dragEnd, glm::vec4(1));
+		// Draw distance from center
+		aie::Gizmos::add2DLine(glm::vec2(0), normal * dist, glm::vec4(1,0.5f,0,1));
+		// Draw normal on plane
+		aie::Gizmos::add2DLine(center, center + normal * orthoSize * 0.02f, glm::vec4(1,0,0,1));
+	}
+	else {
+		m_2dRenderer->drawText(m_font, "R to refresh config", 5, 10);
+	}
+
+	// wipe the screen to the background colour
+	clearScreen();
+
+
+	//DrawText("Hello", glm::vec2(-100, 0));
 	// draw your stuff here!
-	aspectRatio = 16 / 9.f;
-	aie::Gizmos::draw2D(glm::ortho<float>(orthoRange.x, orthoRange.y, orthoRange.x / aspectRatio, orthoRange.y / aspectRatio, -1.0f, 1.0f));
+	aspectRatio = configSettings["AUTO_CALCULATE_ASPECT_RATIO"] == 1 ? 
+		(configValues["APPLICATION_WINDOW_WIDTH"] / configValues["APPLICATION_WINDOW_HEIGHT"]) :
+		(configValues["APPLICATION_ASPECT_RATIO_NUMERATOR"] / configValues["APPLICATION_ASPECT_RATIO_DENOMINATOR"]);
+	glm::vec2 tempOrthoCenter = middleMouseDrag ? (orthoCenter - middleMouseDragDist) : orthoCenter;
+	aie::Gizmos::draw2D(glm::ortho<float>(-orthoSize+ tempOrthoCenter.x, orthoSize+ tempOrthoCenter.x, -orthoSize / aspectRatio + tempOrthoCenter.y, orthoSize / aspectRatio + tempOrthoCenter.y, -1.0f, 1.0f));
+
 
 	// output some text, uses the last used colour
-	m_2dRenderer->drawText(m_font, "Press ESC to quit", 0, 0);
+	//m_2dRenderer->drawText(m_font, "Press ESC to quit", 0, 0);
+	//DrawText("Hello", glm::vec2(-100, 0));
 	// done drawing sprites
+
+	if (configSettings["SHOW_FPS"] == 1) {
+		char fps[32];
+		sprintf_s(fps, 32, "FPS: %i", getFPS());
+		m_2dRenderer->drawText(m_font, fps, 0, getWindowHeight() - 32);
+	}
 	m_2dRenderer->end();
+
+
 }
 
 
 glm::vec2 PhysicsEngine::GetScreenSpacePoint(float xWorld, float yWorld) {
-	int x = ((xWorld + orthoRange.y) / (orthoRange.y * 2.f)) * getWindowWidth();
-	int y = ((yWorld + orthoRange.y / aspectRatio) / (orthoRange.y / aspectRatio * 2.f)) * getWindowHeight();
+	int x = ((xWorld + orthoSize) / (orthoSize * 2.f)) * getWindowWidth();
+	int y = ((yWorld + orthoSize / aspectRatio) / (orthoSize / aspectRatio * 2.f)) * getWindowHeight();
 
 	return glm::vec2(x, y);
 }
 
 glm::vec2 PhysicsEngine::GetWorldSpacePoint(float xScreen, float yScreen) {
 	// AIE bootstrap uses the ortho value ranges for drawing things on the screen. So convert screen point to ortho point
-	float x = ((xScreen / getWindowWidth()) * orthoRange.y * 2) + orthoRange.x;
-	float y = (((yScreen / getWindowHeight()) * orthoRange.y * 2) + orthoRange.x) / aspectRatio;
+	float x = (((xScreen / getWindowWidth()) * orthoSize * 2) - orthoSize) + orthoCenter.x;
+	float y = ((((yScreen / getWindowHeight()) * orthoSize * 2) - orthoSize) / aspectRatio) + orthoCenter.y;
 	return glm::vec2(x, y);
 }
+
 void PhysicsEngine::LoadConfig() {
+	configSettings.clear();
+	configValues.clear();
+
 	std::ifstream is_file("config.txt");
 
 	if (is_file) {
