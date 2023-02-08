@@ -1,0 +1,37 @@
+# How should the coefficient of restitution be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
+RESTITUTION_CALC=1
+
+# How should the coefficient of static friction be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
+STATFRICTION_CALC=1
+
+# The minimum value of a rigidbody's velocities before stopping | 0 to inf 
+V_MIN_LINEAR_THRESHOLD=0.01
+V_MIN_ANGULAR_THRESHOLD=0.1
+
+# Debug
+# Should debug lines be shown for physics objects and rigidbodies (velocities, gravity, normals) | 0 - No | 1 - Yes
+ACTIVE_DEBUG_LINES=1
+# Should fps be shown | 0 - No | 1 - Yes
+SHOW_FPS=1
+
+
+# The maximum amount of lines that can be drawn | 0 to inf
+V_MAX_2D_LINES=16384
+// The maximum amount of tris that can be drawn | 0 to inf
+V_MAX_2D_TRIS=65536
+
+# Scroll sensitivity | 0 to inf
+V_SCROLL_SENSITIVITY=100
+
+# Window
+V_APPLICATION_WINDOW_WIDTH=1280
+V_APPLICATION_WINDOW_HEIGHT=720
+
+# Should window be fullscreen
+APPLICATION_WINDOW_FULLSCREEN=0
+
+# Aspect ratio
+# Should the aspect ratio be automatically calculated using the window width and height (This will ignore aspect ratio values below) | 0 - No | 1 - Yes
+AUTO_CALCULATE_ASPECT_RATIO=1
+V_APPLICATION_APECT_RATIO_NUMERATOR=16
+V_APPLICATION_ASPECT_RATIO_DENOMINATOR=9
