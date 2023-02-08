@@ -6,6 +6,9 @@
 #include "Gizmos.h"
 #include <glm/ext.hpp>
 #include "Spring.h"
+#include "SoftBody.h"
+#include <iostream>
+
 
 PhysicsEngine* PhysicsEngine::physicsEngine = nullptr;
 
@@ -39,24 +42,34 @@ bool PhysicsEngine::startup() {
 
 	// TODO: remember to change this when redistributing a build!
 	// the following path would be used instead: "./font/consolas.ttf"
-	m_font = new aie::Font("../bin/font/consolas.ttf", 32);
+	m_font = new aie::Font("../bin/font/consolas.ttf", 30);
 
 	physicsScene = new PhysicsScene();
-	physicsScene->gravity = glm::vec2(0, -9.8f);
+	physicsScene->gravity = glm::vec2(0, -98.2f);
 	physicsScene->SetFixedDeltaTime(0.01f);
 
 	aie::Gizmos::create(0, 0, configValues["MAX_2D_LINES"], configValues["MAX_2D_TRIS"]);
 
 
-	Plane* plane = new Plane(glm::vec2(0, 1), -30, 0.f, glm::vec4(1, 1, 1, 1));
-	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, 0.f, glm::vec4(1, 1, 1, 1));
-	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, 0.f, glm::vec4(1, 1, 1, 1));
-	Plane* plane4 = new Plane(glm::vec2(0, 1.f), -40, 0.f, glm::vec4(1, 1, 1, 1));
+	Plane* plane = new Plane(glm::vec2(0, 1), -30, 0.f, glm::vec4(0.5f, 0, 1, 1));
+	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, 0.f, glm::vec4(0.5f, 0, 1, 1));
+	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, 0.f, glm::vec4(0.5f, 0, 1, 1));
+	Plane* plane4 = new Plane(glm::vec2(0, 1.f), -40, 0.f, glm::vec4(0.5f, 0, 1, 1));
 
 	physicsScene->AddActor(plane);
 	physicsScene->AddActor(plane2);
 	physicsScene->AddActor(plane3);
-	physicsScene->AddActor(plane4);
+	//physicsScene->AddActor(plane4);
+
+
+	/*std::vector<std::string> sb;
+	sb.push_back("000000");
+	sb.push_back("000000");
+	sb.push_back("000000");
+	sb.push_back("000000");
+
+
+	SoftBody::Build(physicsScene, glm::vec2(-50, 0), 5.0f, 10.0f, 1.f, sb);*/
 
 
 	return true;
@@ -142,6 +155,10 @@ void PhysicsEngine::update(float deltaTime) {
 		}
 		dragEnd = worldPos;
 	}
+	// If key is no longer pressed but mouse is still pressed, cancel action
+	else if (circleDrag && input->isMouseButtonDown(0)) {
+		circleDrag = false;
+	}
 	// If drag stops
 	else if(circleDrag) {
 		circleDrag = false;
@@ -150,7 +167,11 @@ void PhysicsEngine::update(float deltaTime) {
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
 		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f,radius), 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
-		circle->eraser = shouldErase;
+		if (shouldErase) {
+			circle->eraser = shouldErase;
+			// Adding some angular velocity fixes some collision detection problems for some reason
+			circle->angularVelocity = 2.0f;
+		}
 		physicsScene->AddActor(circle);
 	}
 
@@ -163,6 +184,10 @@ void PhysicsEngine::update(float deltaTime) {
 		}
 		dragEnd = worldPos;
 	}
+	// If key is no longer pressed but mouse is still pressed, cancel action
+	else if (boxDrag && input->isMouseButtonDown(0)) {
+		boxDrag = false;
+	}
 	// If drag stops
 	else if (boxDrag) {
 		boxDrag = false;
@@ -171,7 +196,12 @@ void PhysicsEngine::update(float deltaTime) {
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
 		Box* box = new Box(center, glm::vec2(fmax(0.1f,abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
-		box->eraser = shouldErase;
+		if (shouldErase) {
+			box->eraser = shouldErase;
+			// Adding some angular velocity fixes some collision detection problems for some reason
+			box->angularVelocity = 2.0f;
+		}
+
 		physicsScene->AddActor(box);
 	}
 
@@ -183,6 +213,10 @@ void PhysicsEngine::update(float deltaTime) {
 			planeDrag = true;
 		}
 		dragEnd = worldPos;
+	}
+	// If key is no longer pressed but mouse is still pressed, cancel action
+	else if (planeDrag && input->isMouseButtonDown(0)) {
+		planeDrag = false;
 	}
 	// If drag stops
 	else if (planeDrag) {
@@ -196,7 +230,7 @@ void PhysicsEngine::update(float deltaTime) {
 
 		float dist = -glm::dot(toOrigin, normal);
 
-		Plane* plane = new Plane(normal, dist, 0.f, glm::vec4(1, 1, 1, 1));
+		Plane* plane = new Plane(normal, dist, 0.f, glm::vec4(0.5f, 0, 1, 1));
 		//box->eraser = shouldErase;
 		physicsScene->AddActor(plane);
 	}
@@ -223,9 +257,9 @@ void PhysicsEngine::update(float deltaTime) {
 
 	double dir = input->getMouseScroll();
 	if (dir != lastScrollValue) {
-		double deltaDir = dir - lastScrollValue;
+		double deltaDir = (dir - lastScrollValue) * (orthoSize / 1000);
 		lastScrollValue = dir;
-		orthoSize = fmax(1, orthoSize - deltaDir * configValues["SCROLL_SENSITIVITY"]);
+		orthoSize = fmax(1, orthoSize - deltaDir * configValues["SCROLL_SENSITIVITY"]) ;
 	}
 
 	// exit the application
@@ -245,7 +279,7 @@ void PhysicsEngine::draw() {
 		float radius = glm::length(dragEnd - dragStart) * 0.5f;
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
-		aie::Gizmos::add2DCircle(center, radius, 12, glm::vec4(1, 1, 1, 0.5f));
+		aie::Gizmos::add2DCircle(center, radius, 12, shouldErase ? glm::vec4(1, 0, 0, 0.5f) : glm::vec4(1, 1, 1, 0.5f));
 
 		char info[64];
 		sprintf_s(info, 64, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
@@ -255,7 +289,7 @@ void PhysicsEngine::draw() {
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 		glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
 		glm::vec2 absDiff = glm::vec2(abs(diff.x), abs(diff.y));
-		aie::Gizmos::add2DAABBFilled(center, absDiff, glm::vec4(1, 1, 1, 0.5f));
+		aie::Gizmos::add2DAABBFilled(center, absDiff, shouldErase ? glm::vec4(1, 0, 0, 0.5f) :  glm::vec4(1, 1, 1, 0.5f));
 
 		char info[64];
 		sprintf_s(info, 64, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
@@ -268,7 +302,6 @@ void PhysicsEngine::draw() {
 		float dir = (planeClockwise ? 1.f : -1.f);
 		glm::vec2 normal = dir * glm::normalize(glm::vec2(diff.y, -diff.x));
 
-
 		float dist = -glm::dot(toOrigin, normal);
 
 		// Draw plane
@@ -277,6 +310,10 @@ void PhysicsEngine::draw() {
 		aie::Gizmos::add2DLine(glm::vec2(0), normal * dist, glm::vec4(1,0.5f,0,1));
 		// Draw normal on plane
 		aie::Gizmos::add2DLine(center, center + normal * orthoSize * 0.02f, glm::vec4(1,0,0,1));
+
+		char info[100];
+		sprintf_s(info, 100, "Plane: Normal: (%f,%f), Dist: %i | [Tab] Reverse normal", normal.x, normal.y, (int)dist);
+		m_2dRenderer->drawText(m_font, info, 5, 10);
 	}
 	else {
 		m_2dRenderer->drawText(m_font, "R to refresh config", 5, 10);
@@ -330,7 +367,7 @@ void PhysicsEngine::LoadConfig() {
 	configValues.clear();
 
 	std::ifstream is_file("config.txt");
-
+	std::cout << "Loading Config..." << std::endl;
 	if (is_file) {
 		std::string line;
 		while (std::getline(is_file, line))
@@ -349,12 +386,16 @@ void PhysicsEngine::LoadConfig() {
 						key.erase(0, 2);
 						float v = std::stof(value);
 						configValues.emplace(key, v);
+						std::cout << "Value: " << key << " = " << value << std::endl;
+
 					}
 					// Int setting
 					else {
 						int i = std::stoi(value);
 						configSettings.emplace(key, i);
+						std::cout << "Setting: " << key << " = " << value << std::endl;
 					}
+
 
 				}
 			}

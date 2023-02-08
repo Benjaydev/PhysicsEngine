@@ -20,17 +20,18 @@ Plane::Plane(glm::vec2 _normal, float _distance, float _restitution, glm::vec4 _
 
 
 void Plane::Draw() {
-    float lineSegmentLength = PhysicsEngine::physicsEngine->orthoSize*2;
+    float doubleOrthoSize = (PhysicsEngine::physicsEngine->orthoSize * 2) + abs(PhysicsEngine::physicsEngine->orthoCenter.x) + abs(PhysicsEngine::physicsEngine->orthoCenter.y);
+    float lineSegmentLength = doubleOrthoSize;
     glm::vec2 centerPoint = normal * distanceToOrigin;
     // easy to rotate normal through 90 degrees around z
     glm::vec2 parallel(normal.y, -normal.x);
     glm::vec4 colourFade = colour;
-    colourFade.a = 0;
+    colourFade.a = 0.f;
     glm::vec2 start = centerPoint + (parallel * lineSegmentLength);
     glm::vec2 end = centerPoint - (parallel * lineSegmentLength);
     //aie::Gizmos::add2DLine(start, end, colour);
-    aie::Gizmos::add2DTri(start, end, start - normal * 10.0f, colour, colour, colourFade);
-    aie::Gizmos::add2DTri(end, end - normal * 10.0f, start - normal * 10.0f, colour, colourFade, colourFade);
+    aie::Gizmos::add2DTri(start, end, start - normal * doubleOrthoSize, colour, colour, colourFade);
+    aie::Gizmos::add2DTri(end, end - normal * doubleOrthoSize, start - normal * doubleOrthoSize, colour, colourFade, colourFade);
 
     if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
         aie::Gizmos::add2DLine(centerPoint, centerPoint + normal * PhysicsEngine::physicsEngine->orthoSize * 0.02f, glm::vec4(1, 0, 0, 1));

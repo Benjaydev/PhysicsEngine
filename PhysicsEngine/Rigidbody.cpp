@@ -11,8 +11,10 @@ Rigidbody::Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocit
     orientation = _orientation;
     mass = _mass;
     restitution = _restitution;
-    localX = glm::vec2(0);
-    localY = glm::vec2(0);
+    float cs = cosf(orientation);
+    float sn = sinf(orientation);
+    localX = glm::normalize(glm::vec2(cs, sn));
+    localY = glm::normalize(glm::vec2(-sn, cs));
 }
 
 Rigidbody::Rigidbody()
@@ -23,8 +25,10 @@ Rigidbody::Rigidbody()
     orientation = 0;
     mass = 0;
     restitution = 0;
-    localX = glm::vec2(0);
-    localY = glm::vec2(0);
+    float cs = cosf(orientation);
+    float sn = sinf(orientation);
+    localX = glm::normalize(glm::vec2(cs, sn));
+    localY = glm::normalize(glm::vec2(-sn, cs));
 }
 
 Rigidbody::~Rigidbody()
@@ -33,7 +37,7 @@ Rigidbody::~Rigidbody()
 
 void Rigidbody::Draw() {
     // Show gravity
-    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
+    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1 && !eraser) {
         aie::Gizmos::add2DLine(position, position + PhysicsScene::gravity, glm::vec4(1, 0.5f, 0, 1));
         aie::Gizmos::add2DLine(position, position + velocity, glm::vec4(1, 1, 0, 1));
 
@@ -48,7 +52,7 @@ void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
     // Delete self after 2 frames without collision if an eraser
     if (eraser) {
         frameCount++;
-        if (frameCount >= 2) {
+        if (frameCount >= 4) {
             PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
         }
     }

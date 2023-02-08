@@ -7,6 +7,12 @@ Spring::Spring(Rigidbody* _body1, Rigidbody* _body2, float _springCoefficient, f
 	body2 = _body2;
 	springCoefficient = _springCoefficient;
 	damping = _damping;
+
+	if (restLength == 0) {
+		glm::vec2 diff = (GetContact2() - GetContact1());
+		restLength = glm::length(diff);
+	}
+
 	restLength = _restLength;
 	contact1 = _contact1;
 	contact2 = _contact2;
@@ -27,6 +33,12 @@ void Spring::FixedUpdate(glm::vec2 gravity, float timeStep) {
 	// F = -kX - bv 
 	glm::vec2 force = direction * springCoefficient * (restLength - length) -
 		damping * relativeVelocity;
+
+	// cap the spring force to 1000 N to prevent numerical instability 
+	const float threshold = 1000.0f;
+	float forceMag = glm::length(force);
+	if (forceMag > threshold)
+		force *= threshold / forceMag;
 
 	body1->ApplyForce(-force * timeStep, p1);
 	body2->ApplyForce(force * timeStep, p2);
