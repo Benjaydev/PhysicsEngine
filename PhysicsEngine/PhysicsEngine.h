@@ -60,7 +60,10 @@ public:
 
 
 	float orthoSize = 100;
+	const float maxOrthoSize =  10000000;
 	glm::vec2 orthoCenter = glm::vec2(0, 0);
+
+
 
 	PhysicsScene* physicsScene = nullptr;
 

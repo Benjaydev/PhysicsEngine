@@ -23,3 +23,4 @@ Erase as Circle: [Left Shift] + [C] + Drag Mouse
 # Scene
 Move Camera: Hold [Middle Mouse Button] + Drag Mouse
 Camera Zoom: Scroll Wheel
+Camera Zoom Unscaled: [Ctrl] + Scroll Wheel

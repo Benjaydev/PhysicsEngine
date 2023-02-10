@@ -32,8 +32,6 @@
 *.app
 
 # AIE Bootstrap
-/PhysicsEngine/bin/*
-!/PhysicsEngine/bin/config.txt
 /PhysicsEngine/bootstrap
 /PhysicsEngine/dependencies
 /PhysicsEngine/temp

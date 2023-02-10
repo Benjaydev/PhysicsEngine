@@ -1,4 +1,4 @@
-# How should the coefficient of restitution be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
+s# How should the coefficient of restitution be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
 RESTITUTION_CALC=1
 
 # How should the coefficient of static friction be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
@@ -10,7 +10,7 @@ V_MIN_ANGULAR_THRESHOLD=0.1
 
 # Debug
 # Should debug lines be shown for physics objects and rigidbodies (velocities, gravity, normals) | 0 - No | 1 - Yes
-ACTIVE_DEBUG_LINES=1
+ACTIVE_DEBUG_LINES=0
 # Should fps be shown | 0 - No | 1 - Yes
 SHOW_FPS=1
 

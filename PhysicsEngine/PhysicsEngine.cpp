@@ -8,7 +8,7 @@
 #include "Spring.h"
 #include "SoftBody.h"
 #include <iostream>
-
+#include <limits>
 
 PhysicsEngine* PhysicsEngine::physicsEngine = nullptr;
 
@@ -257,9 +257,9 @@ void PhysicsEngine::update(float deltaTime) {
 
 	double dir = input->getMouseScroll();
 	if (dir != lastScrollValue) {
-		double deltaDir = (dir - lastScrollValue) * (orthoSize / 1000);
+		double deltaDir = (dir - lastScrollValue) * (input->isKeyDown(aie::INPUT_KEY_LEFT_CONTROL) ? 1 : (orthoSize / 1000));
 		lastScrollValue = dir;
-		orthoSize = fmax(1, orthoSize - deltaDir * configValues["SCROLL_SENSITIVITY"]) ;
+		orthoSize = fmin(maxOrthoSize, fmax(1, orthoSize - deltaDir * configValues["SCROLL_SENSITIVITY"]));
 	}
 
 	// exit the application
@@ -281,8 +281,8 @@ void PhysicsEngine::draw() {
 
 		aie::Gizmos::add2DCircle(center, radius, 12, shouldErase ? glm::vec4(1, 0, 0, 0.5f) : glm::vec4(1, 1, 1, 0.5f));
 
-		char info[64];
-		sprintf_s(info, 64, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
+		char info[100];
+		sprintf_s(info, 100, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
 		m_2dRenderer->drawText(m_font, info, 5, 10);
 	}
 	else if (boxDrag) {
@@ -291,8 +291,8 @@ void PhysicsEngine::draw() {
 		glm::vec2 absDiff = glm::vec2(abs(diff.x), abs(diff.y));
 		aie::Gizmos::add2DAABBFilled(center, absDiff, shouldErase ? glm::vec4(1, 0, 0, 0.5f) :  glm::vec4(1, 1, 1, 0.5f));
 
-		char info[64];
-		sprintf_s(info, 64, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
+		char info[100];
+		sprintf_s(info, 100, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
 		m_2dRenderer->drawText(m_font, info, 5, 10);
 	}
 	else if (planeDrag) {
@@ -342,6 +342,11 @@ void PhysicsEngine::draw() {
 		sprintf_s(fps, 32, "FPS: %i", getFPS());
 		m_2dRenderer->drawText(m_font, fps, 0, getWindowHeight() - 32);
 	}
+
+	char zoom[32];
+	sprintf_s(zoom, 32, "Zoom: %f", orthoSize / 100.f);
+	m_2dRenderer->drawText(m_font, zoom, 5, 40);
+
 	m_2dRenderer->end();
 
 
