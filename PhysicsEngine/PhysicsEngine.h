@@ -17,6 +17,7 @@ public:
 	virtual void shutdown();
 
 	virtual void update(float deltaTime);
+	virtual void TestModeUpdate(float deltaTime);
 	virtual void draw();
 
 	static PhysicsEngine* physicsEngine;
@@ -32,6 +33,9 @@ public:
 	static float CoRestMax(float restitution1, float restitution2) { return fmax(restitution1, restitution2); }
 
 	static void LoadConfig();
+
+	static std::string Encrypt(std::string text, std::string key);
+	static std::string Decrypt(std::string text, std::string key);
 
 	void Rope(int num, glm::vec2 position, bool isKinetic = true);
 

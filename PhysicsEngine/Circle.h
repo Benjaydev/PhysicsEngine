@@ -9,6 +9,7 @@ public:
     ~Circle();
 
     void FixedUpdate(glm::vec2 gravity, float timeStep) override;
+    void Update(float deltaTime) override;
     void Draw() override;
 
     float GetRadius() { return radius; }

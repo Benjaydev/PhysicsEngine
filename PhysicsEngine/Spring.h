@@ -10,6 +10,7 @@ public:
     ~Spring();
 
     void FixedUpdate(glm::vec2 gravity, float timeStep) override;
+    void Update(float deltaTime) override;
     void Draw() override;
 
     glm::vec4 GetColour() { return colour; }

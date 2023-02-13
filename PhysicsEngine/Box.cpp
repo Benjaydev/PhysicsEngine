@@ -15,12 +15,16 @@ void Box::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
 }
 
+void Box::Update(float deltaTime) {
+	Rigidbody::Update(deltaTime);
+}
+
 void Box::Draw() {
 	// draw using local axes 
-	glm::vec2 p1 = position - localX * extents.x - localY * extents.y;
-	glm::vec2 p2 = position + localX * extents.x - localY * extents.y;
-	glm::vec2 p3 = position - localX * extents.x + localY * extents.y;
-	glm::vec2 p4 = position + localX * extents.x + localY * extents.y;
+	glm::vec2 p1 = visualPosition - visualLocalX * extents.x - visualLocalY * extents.y;
+	glm::vec2 p2 = visualPosition + visualLocalX * extents.x - visualLocalY * extents.y;
+	glm::vec2 p3 = visualPosition - visualLocalX * extents.x + visualLocalY * extents.y;
+	glm::vec2 p4 = visualPosition + visualLocalX * extents.x + visualLocalY * extents.y;
 	aie::Gizmos::add2DTri(p1, p2, p4, colour);
 	aie::Gizmos::add2DTri(p1, p4, p3, colour);
 

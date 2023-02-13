@@ -18,6 +18,8 @@ Plane::Plane(glm::vec2 _normal, float _distance, float _restitution, glm::vec4 _
     
 }
 
+void Plane::Update(float deltaTime) {
+}
 
 void Plane::Draw() {
     float doubleOrthoSize = (PhysicsEngine::physicsEngine->orthoSize * 2) + abs(PhysicsEngine::physicsEngine->orthoCenter.x) + abs(PhysicsEngine::physicsEngine->orthoCenter.y);
@@ -63,6 +65,9 @@ void Plane::ResolveCollision(Rigidbody* actor2, glm::vec2 contact)
     glm::vec2 force = normal * j;
 
     actor2->ApplyForce(force, contact);
+
+    if (actor2->collisionCallback)
+        actor2->collisionCallback(this);
 
     float pen = glm::dot(contact, normal) - distanceToOrigin;
     PhysicsScene::ApplyContactForces(actor2, nullptr, normal, pen);

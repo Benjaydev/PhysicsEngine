@@ -1,9 +1,6 @@
 # This will encrypt the config file (Use this for finalised destributed builds) !You cannot undo this action!
 ENCRYPT=0
 
-# Is the program in test mode - You should deactivate this in release builds (Test mode features are: spawning and deleting of objects, camera movement, inputs, and some on screen text) | 0 - No | 1 - Yes
-TEST_MODE=1
-
 # How should the coefficient of restitution be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
 RESTITUTION_CALC=1
 

@@ -20,17 +20,20 @@ void Circle::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
 }
 
+void Circle::Update(float deltaTime) {
+    Rigidbody::Update(deltaTime);
+}
+
 void Circle::Draw()
 {
-    glm::vec2 end = glm::vec2(std::cos(orientation), std::sin(orientation)) *
+    glm::vec2 end = glm::vec2(std::cos(visualOrientation), std::sin(visualOrientation)) *
         radius;
 
-    aie::Gizmos::add2DCircle(position, radius, 12, colour);
+    aie::Gizmos::add2DCircle(visualPosition, radius, 12, colour);
 
     if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
-        aie::Gizmos::add2DLine(position, position + end, glm::vec4(1, 1, 1, 1));
+        aie::Gizmos::add2DLine(visualPosition, visualPosition + end, glm::vec4(1, 1, 1, 1));
     }
-
-
     Rigidbody::Draw();
+
 }

@@ -42,11 +42,11 @@ bool PhysicsEngine::startup() {
 
 	// TODO: remember to change this when redistributing a build!
 	// the following path would be used instead: "./font/consolas.ttf"
-	m_font = new aie::Font("../bin/font/consolas.ttf", 30);
+	m_font = new aie::Font("./font/consolas.ttf", 30);
 
 	physicsScene = new PhysicsScene();
 	physicsScene->gravity = glm::vec2(0, -98.2f);
-	physicsScene->SetFixedDeltaTime(0.01f);
+
 
 	aie::Gizmos::create(0, 0, configValues["MAX_2D_LINES"], configValues["MAX_2D_TRIS"]);
 
@@ -59,6 +59,20 @@ bool PhysicsEngine::startup() {
 	physicsScene->AddActor(plane);
 	physicsScene->AddActor(plane2);
 	physicsScene->AddActor(plane3);
+
+	//Circle* circle = new Circle(glm::vec2(0, 0), glm::vec2(0), 10.f, 10.f, 1.f, glm::vec4(1, 1, 1, 1));
+	//circle->isTrigger = true;
+	//circle->isKinematic = true;
+	//physicsScene->AddActor(circle);
+
+	//circle->triggerEnterCallback = [=](PhysicsObject* other) { std::cout << "Enter:" <<
+	//	other << std::endl; };
+	//circle->triggerExitCallback = [=](PhysicsObject* other) { std::cout << "Exit:" <<
+	//	other << std::endl; };
+
+
+
+
 	//physicsScene->AddActor(plane4);
 
 
@@ -70,7 +84,6 @@ bool PhysicsEngine::startup() {
 
 
 	SoftBody::Build(physicsScene, glm::vec2(-50, 0), 5.0f, 10.0f, 1.f, sb);*/
-
 
 	return true;
 }
@@ -107,6 +120,8 @@ void PhysicsEngine::shutdown() {
 
 void PhysicsEngine::update(float deltaTime) {
 
+	physicsScene->SetFixedDeltaTime(configValues["FIXED_UPDATE"]);
+
 	// input example
 	aie::Input* input = aie::Input::getInstance();
 
@@ -116,8 +131,24 @@ void PhysicsEngine::update(float deltaTime) {
 		physicsScene->Update(deltaTime);
 
 		physicsScene->Draw();
-
 	}
+
+	// exit the application
+	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
+		quit();
+
+	if (configSettings["TEST_MODE"] == 1) {
+		TestModeUpdate(deltaTime);
+	}
+
+
+}
+void PhysicsEngine::TestModeUpdate(float deltaTime) {
+
+	// input example
+	aie::Input* input = aie::Input::getInstance();
+
+
 
 	if (input->wasKeyPressed(aie::INPUT_KEY_R)) {
 		LoadConfig();
@@ -147,7 +178,7 @@ void PhysicsEngine::update(float deltaTime) {
 	shouldErase = input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT);
 
 	// Circle drag
-	if(input->isKeyDown(aie::INPUT_KEY_C) && input->isMouseButtonDown(0)){
+	if (input->isKeyDown(aie::INPUT_KEY_C) && input->isMouseButtonDown(0)) {
 
 		if (!circleDrag) {
 			dragStart = worldPos;
@@ -160,13 +191,13 @@ void PhysicsEngine::update(float deltaTime) {
 		circleDrag = false;
 	}
 	// If drag stops
-	else if(circleDrag) {
+	else if (circleDrag) {
 		circleDrag = false;
 
 		float radius = glm::length(dragEnd - dragStart) * 0.5f;
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
-		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f,radius), 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
+		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f, radius), 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
 		if (shouldErase) {
 			circle->eraser = shouldErase;
 			// Adding some angular velocity fixes some collision detection problems for some reason
@@ -195,7 +226,7 @@ void PhysicsEngine::update(float deltaTime) {
 		glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
-		Box* box = new Box(center, glm::vec2(fmax(0.1f,abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
+		Box* box = new Box(center, glm::vec2(fmax(0.1f, abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
 		if (shouldErase) {
 			box->eraser = shouldErase;
 			// Adding some angular velocity fixes some collision detection problems for some reason
@@ -224,7 +255,7 @@ void PhysicsEngine::update(float deltaTime) {
 
 		glm::vec2 diff = (dragEnd - dragStart);
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
-		glm::vec2 toOrigin = glm::vec2(0, 0) - center;		
+		glm::vec2 toOrigin = glm::vec2(0, 0) - center;
 		float dir = (planeClockwise ? 1.f : -1.f);
 		glm::vec2 normal = dir * glm::normalize(glm::vec2(diff.y, -diff.x));
 
@@ -261,10 +292,6 @@ void PhysicsEngine::update(float deltaTime) {
 		lastScrollValue = dir;
 		orthoSize = fmin(maxOrthoSize, fmax(1, orthoSize - deltaDir * configValues["SCROLL_SENSITIVITY"]));
 	}
-
-	// exit the application
-	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
-		quit();
 }
 
 
@@ -274,50 +301,52 @@ void PhysicsEngine::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
+	if (configSettings["TEST_MODE"] == 1) {
+		if (circleDrag) {
+			float radius = glm::length(dragEnd - dragStart) * 0.5f;
+			glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
-	if (circleDrag) {
-		float radius = glm::length(dragEnd - dragStart) * 0.5f;
-		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+			aie::Gizmos::add2DCircle(center, radius, 12, shouldErase ? glm::vec4(1, 0, 0, 0.5f) : glm::vec4(1, 1, 1, 0.5f));
 
-		aie::Gizmos::add2DCircle(center, radius, 12, shouldErase ? glm::vec4(1, 0, 0, 0.5f) : glm::vec4(1, 1, 1, 0.5f));
+			char info[100];
+			sprintf_s(info, 100, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
+			m_2dRenderer->drawText(m_font, info, 5, 10);
+		}
+		else if (boxDrag) {
+			glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+			glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
+			glm::vec2 absDiff = glm::vec2(abs(diff.x), abs(diff.y));
+			aie::Gizmos::add2DAABBFilled(center, absDiff, shouldErase ? glm::vec4(1, 0, 0, 0.5f) : glm::vec4(1, 1, 1, 0.5f));
 
-		char info[100];
-		sprintf_s(info, 100, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
-		m_2dRenderer->drawText(m_font, info, 5, 10);
+			char info[100];
+			sprintf_s(info, 100, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
+			m_2dRenderer->drawText(m_font, info, 5, 10);
+		}
+		else if (planeDrag) {
+			glm::vec2 diff = (dragEnd - dragStart);
+			glm::vec2 center = (dragEnd + dragStart) * 0.5f;
+			glm::vec2 toOrigin = glm::vec2(0, 0) - center;
+			float dir = (planeClockwise ? 1.f : -1.f);
+			glm::vec2 normal = dir * glm::normalize(glm::vec2(diff.y, -diff.x));
+
+			float dist = -glm::dot(toOrigin, normal);
+
+			// Draw plane
+			aie::Gizmos::add2DLine(dragStart, dragEnd, glm::vec4(1));
+			// Draw distance from center
+			aie::Gizmos::add2DLine(glm::vec2(0), normal * dist, glm::vec4(1, 0.5f, 0, 1));
+			// Draw normal on plane
+			aie::Gizmos::add2DLine(center, center + normal * orthoSize * 0.02f, glm::vec4(1, 0, 0, 1));
+
+			char info[100];
+			sprintf_s(info, 100, "Plane: Normal: (%.2f,%.2f), Dist: %i | [Tab] Reverse normal", normal.x, normal.y, (int)dist);
+			m_2dRenderer->drawText(m_font, info, 5, 10);
+		}
+		else {
+			m_2dRenderer->drawText(m_font, "R to refresh config", 5, 10);
+		}
 	}
-	else if (boxDrag) {
-		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
-		glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
-		glm::vec2 absDiff = glm::vec2(abs(diff.x), abs(diff.y));
-		aie::Gizmos::add2DAABBFilled(center, absDiff, shouldErase ? glm::vec4(1, 0, 0, 0.5f) :  glm::vec4(1, 1, 1, 0.5f));
-
-		char info[100];
-		sprintf_s(info, 100, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
-		m_2dRenderer->drawText(m_font, info, 5, 10);
-	}
-	else if (planeDrag) {
-		glm::vec2 diff = (dragEnd - dragStart);
-		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
-		glm::vec2 toOrigin = glm::vec2(0, 0) - center;
-		float dir = (planeClockwise ? 1.f : -1.f);
-		glm::vec2 normal = dir * glm::normalize(glm::vec2(diff.y, -diff.x));
-
-		float dist = -glm::dot(toOrigin, normal);
-
-		// Draw plane
-		aie::Gizmos::add2DLine(dragStart, dragEnd, glm::vec4(1));
-		// Draw distance from center
-		aie::Gizmos::add2DLine(glm::vec2(0), normal * dist, glm::vec4(1,0.5f,0,1));
-		// Draw normal on plane
-		aie::Gizmos::add2DLine(center, center + normal * orthoSize * 0.02f, glm::vec4(1,0,0,1));
-
-		char info[100];
-		sprintf_s(info, 100, "Plane: Normal: (%f,%f), Dist: %i | [Tab] Reverse normal", normal.x, normal.y, (int)dist);
-		m_2dRenderer->drawText(m_font, info, 5, 10);
-	}
-	else {
-		m_2dRenderer->drawText(m_font, "R to refresh config", 5, 10);
-	}
+	
 
 	// wipe the screen to the background colour
 	clearScreen();
@@ -343,11 +372,14 @@ void PhysicsEngine::draw() {
 		m_2dRenderer->drawText(m_font, fps, 0, getWindowHeight() - 32);
 	}
 
-	char zoom[32];
-	sprintf_s(zoom, 32, "Zoom: %f", orthoSize / 100.f);
-	m_2dRenderer->drawText(m_font, zoom, 5, 40);
+	if (configSettings["TEST_MODE"] == 1) {
+		char zoom[32];
+		sprintf_s(zoom, 32, "Zoom: %.2fx", round((orthoSize / 100) * 100) / 100);
+		m_2dRenderer->drawText(m_font, zoom, 5, 40);
 
-	m_2dRenderer->end();
+		m_2dRenderer->end();
+	}
+
 
 
 }
@@ -372,17 +404,24 @@ void PhysicsEngine::LoadConfig() {
 	configValues.clear();
 
 	std::ifstream is_file("config.txt");
-	std::cout << "Loading Config..." << std::endl;
-	if (is_file) {
+	std::fstream is_file_build("buildConfig.txt", std::ifstream::in);
+	bool isBuild = false;
+
+
+	// If program is not a build (has a regular config file and not a release one)
+	if (is_file && !is_file_build) {
+		std::cout << "Loading Config..." << std::endl;
 		std::string line;
+		// Get every line
 		while (std::getline(is_file, line))
 		{
 			std::istringstream iss(line);
-
 			std::string key;
+			// Get the key name
 			if (std::getline(iss, key, '='))
 			{
 				std::string value;
+				// Get the value
 				if (std::getline(iss, value))
 				{
 					// Value setting
@@ -390,24 +429,118 @@ void PhysicsEngine::LoadConfig() {
 						// Remove prefix from key
 						key.erase(0, 2);
 						float v = std::stof(value);
+				
 						configValues.emplace(key, v);
 						std::cout << "Value: " << key << " = " << value << std::endl;
 
 					}
 					// Int setting
 					else {
+
 						int i = std::stoi(value);
+
+						// If this config needs to be encrypted
+						if (key == "ENCRYPT" && i == 1) {
+							isBuild = true;
+						}
 						configSettings.emplace(key, i);
 						std::cout << "Setting: " << key << " = " << value << std::endl;
 					}
+				}
+			}
+		}
+		// Close the file
+		is_file.close();
+	}
+	// If this is a release build
+	else if (is_file_build) {
+		is_file.close();
+		// Remove old config file
+		if (is_file_build) {
+			std::remove("config.txt");
+		}
 
+		std::string line;
+		// Get every line
+		while (std::getline(is_file_build, line))
+		{
+			// Decrypt the line
+			std::istringstream iss(Decrypt(line, "293supersecure342encryption994key221LOL"));
+			std::string key;
+			// Get the key name
+			if (std::getline(iss, key, '='))
+			{
+				std::string value;
+				// Get the value
+				if (std::getline(iss, value))
+				{
+					// Value setting
+					if (key.find("V_") != std::string::npos) {
+						// Remove prefix from key 
+						key.erase(0, 2);
+						float v = std::stof(value);
+						configValues.emplace(key, v);
+					}
+					// Int setting
+					else {
 
+						// Don't need to store whether this is encrypted
+						if (key == "ENCRYPT") {
+							continue;
+						}
+
+						int i = std::stoi(value);
+						configSettings.emplace(key, i);
+
+					}
 				}
 			}
 		}
 	}
+	
+	
+	// Encrypt the config file (used for release builds where config shouldn't be changed)
+	if(isBuild) {
+		// Reoppen original config
+		std::ifstream is_file_original("config.txt");
+		// If build file hasn't been created yet
+		if (is_file_original && !is_file_build) {
+			is_file_build.open("buildConfig.txt", std::ifstream::out);
+			std::string line;
+			// Encrypt all data from config file, and put it into new build config
+			while (std::getline(is_file_original, line))
+			{
+				if (line.find("#") == std::string::npos && line != "")
+				{
+					std::string encrypted = Encrypt(line, "293supersecure342encryption994key221LOL");
+					char* char_array = new char[encrypted.length() + 1];
+					strcpy(char_array, encrypted.c_str());
+
+					is_file_build << encrypted << "\n";
+				}
+
+			}
+		}
+		is_file_original.close();
+		std::remove("config.txt");
+	}
+	is_file_build.close();
 }
 
+std::string PhysicsEngine::Encrypt(std::string text, std::string key) {
+	std::string temp = key;
+	while (key.length() < text.length())
+		key += temp;
+
+	for (int i = 0; i < text.length(); i++) {
+		text[i] ^= key[i];
+	}
+	return text;
+}
+
+std::string PhysicsEngine::Decrypt(std::string text, std::string key) {
+	return Encrypt(text, key);
+}
 
 
 float PhysicsEngine::CalculateCoefficientRestitution(float restitution1, float restitution2) {

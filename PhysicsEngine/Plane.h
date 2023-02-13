@@ -9,6 +9,7 @@ public:
     ~Plane();
 
     void FixedUpdate(glm::vec2 gravity, float timeStep) override {};
+    void Update(float deltaTime) override;
     void Draw() override;
     void ResetPosition() override {};
 

@@ -3,9 +3,8 @@
 #include "PhysicsScene.h"
 #include "PhysicsEngine.h"
 
-Rigidbody::Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocity, float _orientation, float _mass, float _restitution)
+Rigidbody::Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocity, float _orientation, float _mass, float _restitution) : PhysicsObject(_shapeID)
 {
-    shapeID = _shapeID;
     position = _position;
     velocity = _velocity;
     orientation = _orientation;
@@ -15,11 +14,16 @@ Rigidbody::Rigidbody(ShapeType _shapeID, glm::vec2 _position, glm::vec2 _velocit
     float sn = sinf(orientation);
     localX = glm::normalize(glm::vec2(cs, sn));
     localY = glm::normalize(glm::vec2(-sn, cs));
+
+    // By default, call onCollider function when a collision occurs
+    collisionCallback = std::bind(&Rigidbody::OnCollide, this, std::placeholders::_1);
+
+    triggerEnterCallback = std::bind(&Rigidbody::OnTriggerEnter, this, std::placeholders::_1);
+    triggerExitCallback = std::bind(&Rigidbody::OnTriggerExit, this, std::placeholders::_1);
 }
 
-Rigidbody::Rigidbody()
+Rigidbody::Rigidbody() : PhysicsObject(NONE)
 {
-    shapeID = NONE;
     position = glm::vec2(0);
     velocity = glm::vec2(0);;
     orientation = 0;
@@ -29,6 +33,12 @@ Rigidbody::Rigidbody()
     float sn = sinf(orientation);
     localX = glm::normalize(glm::vec2(cs, sn));
     localY = glm::normalize(glm::vec2(-sn, cs));
+
+    // By default, call onCollider function when a collision occurs
+    collisionCallback = std::bind(&Rigidbody::OnCollide, this, std::placeholders::_1);
+
+    triggerEnterCallback = std::bind(&Rigidbody::OnTriggerEnter, this, std::placeholders::_1);
+    triggerExitCallback = std::bind(&Rigidbody::OnTriggerExit, this, std::placeholders::_1);
 }
 
 Rigidbody::~Rigidbody()
@@ -38,14 +48,29 @@ Rigidbody::~Rigidbody()
 void Rigidbody::Draw() {
     // Show gravity
     if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1 && !eraser) {
-        aie::Gizmos::add2DLine(position, position + PhysicsScene::gravity, glm::vec4(1, 0.5f, 0, 1));
-        aie::Gizmos::add2DLine(position, position + velocity, glm::vec4(1, 1, 0, 1));
+        aie::Gizmos::add2DLine(visualPosition, visualPosition + PhysicsScene::gravity, glm::vec4(1, 0.5f, 0, 1));
+        aie::Gizmos::add2DLine(visualPosition, visualPosition + velocity, glm::vec4(1, 1, 0, 1));
 
-        aie::Gizmos::add2DLine(position, position + (GetPotentialEnergy() / 1000), glm::vec4(1, 1, 1, 1));
+        aie::Gizmos::add2DLine(visualPosition, visualPosition + (GetPotentialEnergy() / 1000), glm::vec4(1, 1, 1, 1));
     }
 
 }
 
+
+void Rigidbody::Update(float deltaTime) {
+    if (PhysicsEngine::configSettings["SHOULD_LERP_POSITIONS"] == 1) {
+        deltaTimeCount += deltaTime;
+        float visualLerpAlpha = (deltaTimeCount / fixedTimeStore);
+        // Update the visual position outside seperately from physics updates
+        visualPosition = lastPosition + ((position - lastPosition) * visualLerpAlpha);
+        visualOrientation = lastOrientation + ((orientation - lastOrientation) * visualLerpAlpha);
+
+        visualLocalX = lastLocalX + ((localX - lastLocalX) * visualLerpAlpha);
+        visualLocalY = lastLocalY + ((localY - lastLocalY) * visualLerpAlpha);
+
+    }
+ 
+}
 
 void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
 {
@@ -57,21 +82,55 @@ void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
         }
     }
 
-    //store the local axes 
+    lastLocalX = localX;
+    lastLocalY = localY;
+
+    // Store the local axes 
     float cs = cosf(orientation);
     float sn = sinf(orientation);
     localX = glm::normalize(glm::vec2(cs, sn));
     localY = glm::normalize(glm::vec2(-sn, cs));
 
+
+    // Trigger checks 
+    if (isTrigger)
+    {
+        // Check every object that is inside us and called triggerEnter on 
+        // if they haven’t registered inside us this frame, they must have exited 
+        // so remove them from our list and call triggerExit 
+        for (auto it = objectsInside.begin(); it != objectsInside.end(); it++)
+        {
+            if (std::find(objectsInsideThisFrame.begin(),
+                objectsInsideThisFrame.end(), *it) == objectsInsideThisFrame.end())
+            {
+                if (triggerExitCallback)
+                    triggerExitCallback(*it);
+                it = objectsInside.erase(it);
+                if (it == objectsInside.end())
+                    break;
+            }
+        }
+    }
+
+    // clear this list now for next frame 
+    objectsInsideThisFrame.clear();
+
     if (isKinematic) {
         velocity = glm::vec2(0);
         angularVelocity = 0;
-        return;
     }
 
+    // keep track of the physics update step
+    fixedTimeStore = timeStep;
+    // Reset deltaTime count
+    deltaTimeCount = 0;
+
+
+    lastPosition = position;
     position += velocity * timeStep;
     ApplyForce(gravity * mass * timeStep, position);
 
+    lastOrientation = orientation;
     orientation += angularVelocity * timeStep;
 
     velocity -= velocity * linearDrag * timeStep;
@@ -82,6 +141,14 @@ void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
     }
     if (abs(angularVelocity) < PhysicsEngine::configValues["MIN_ANGULAR_THRESHOLD"]) {
         angularVelocity = 0;
+    }
+
+    // Positions shouldn't lerp
+    if (PhysicsEngine::configSettings["SHOULD_LERP_POSITIONS"] != 1) {
+        visualPosition = position;
+        visualOrientation = orientation;
+        visualLocalX = localX;
+        visualLocalY = localY;
     }
 
 }
@@ -111,6 +178,10 @@ void Rigidbody::ApplyForceToActor(Rigidbody* actor2, glm::vec2 force)
 
 void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2* collisionNormal, float pen)
 {
+    // register that these two objects have overlapped this frame 
+    objectsInsideThisFrame.push_back(actor2);
+    actor2->objectsInsideThisFrame.push_back(this);
+
     // Object should erase other object it collides with
     if (eraser) {
         frameCount = 0;
@@ -140,8 +211,21 @@ void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2
 
         glm::vec2 force = (1.0f + 1) * mass1 * mass2 / (mass1 + mass2) * (v1 - v2) * normal;
 
-        ApplyForce(-force, contact);
-        actor2->ApplyForce(force, contact);
+        if (!isTrigger && !actor2->isTrigger) {
+            ApplyForce(-force, contact);
+            actor2->ApplyForce(force, contact);
+
+            if (collisionCallback != nullptr)
+                collisionCallback(actor2);
+            if (actor2->collisionCallback)
+                actor2->collisionCallback(this);
+        }
+        else
+        {
+            TriggerEnter(actor2);
+            actor2->TriggerEnter(this);
+        }
+
     }
 
     if (pen > 0) {
@@ -151,6 +235,16 @@ void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2
 
    
 
+}
+
+void Rigidbody::TriggerEnter(PhysicsObject* actor2)
+{
+    if (isTrigger && std::find(objectsInside.begin(), objectsInside.end(), actor2) == objectsInside.end())
+    {
+        objectsInside.push_back(actor2);
+        if (triggerEnterCallback != nullptr)
+            triggerEnterCallback(actor2);
+    }
 }
 
 float Rigidbody::GetPotentialEnergy()

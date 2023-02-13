@@ -21,10 +21,13 @@ protected:
 public:
 
     virtual void FixedUpdate(glm::vec2 gravity, float timeStep) = 0;
+    virtual void Update(float deltaTime) = 0;
     virtual void Draw() = 0;
     virtual void ResetPosition() {};
 
     ShapeType GetShapeID() { return shapeID; };
+
+
 
 protected:
 

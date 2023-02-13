@@ -1,6 +1,7 @@
 #pragma once
 #include "PhysicsObject.h"
-
+#include <functional>
+#include <list>
 
 class Rigidbody : public PhysicsObject {
 public:
@@ -8,7 +9,8 @@ public:
     Rigidbody();
     ~Rigidbody();
 
-    virtual void FixedUpdate(glm::vec2 gravity, float timeStep);
+    virtual void FixedUpdate(glm::vec2 gravity, float timeStep) override;
+    virtual void Update(float deltaTime) override;
     void Draw() override;
     void ApplyForce(glm::vec2 force, glm::vec2 pos);
     void AddForceToActor(Rigidbody* actor2, glm::vec2 force);
@@ -30,6 +32,16 @@ public:
 
     glm::vec2 ToWorld(glm::vec2 point);
 
+    std::function<void(PhysicsObject*)> collisionCallback;
+    virtual void OnCollide(PhysicsObject* other) {};
+
+    std::list<PhysicsObject*> objectsInside;
+    std::list<PhysicsObject*> objectsInsideThisFrame;
+    std::function<void(PhysicsObject*)> triggerEnterCallback;
+    std::function<void(PhysicsObject*)> triggerExitCallback;
+    virtual void OnTriggerEnter(PhysicsObject* other) {};
+    virtual void OnTriggerExit(PhysicsObject* other) {};
+
     glm::vec2 position;
     glm::vec2 velocity;
     float mass;
@@ -47,6 +59,24 @@ public:
 
     bool isKinematic = false;
     bool eraser = false;
+    bool isTrigger = false;
 
     int frameCount = 0;
+
+protected:
+    void TriggerEnter(PhysicsObject* other);
+
+    float fixedTimeStore = 0.01f;
+    float deltaTimeCount = 0.0f;
+
+    glm::vec2 lastPosition;
+    float lastOrientation;
+    glm::vec2 visualPosition;
+    float visualOrientation;
+
+    glm::vec2 lastLocalX;
+    glm::vec2 lastLocalY;
+
+    glm::vec2 visualLocalX;
+    glm::vec2 visualLocalY;
 };

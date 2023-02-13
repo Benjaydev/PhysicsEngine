@@ -60,10 +60,10 @@ typedef bool(*CollisionFn)(PhysicsObject*, PhysicsObject*);
 /*
 column = 1st object
 Row = 2nd object
-            Plane Circle
+            Plane Circle Box
     Plane
     Circle
-
+    Box
 
 */
 static CollisionFn collisionFunctionArray[] =
@@ -81,6 +81,7 @@ void PhysicsScene::Update(float dt)
     static float accumulatedTime = 0.0f;
     accumulatedTime += deltaTime;
 
+
     while (accumulatedTime >= fixedDeltaTime)
     {
         for (PhysicsObject* pActor : sceneActors)
@@ -95,6 +96,16 @@ void PhysicsScene::Update(float dt)
 
         DestroyAllQueued();
     }
+
+
+    if (PhysicsEngine::configSettings["SHOULD_LERP_POSITIONS"] == 1) {
+        // Do default update
+        for (PhysicsObject* pActor : sceneActors)
+        {
+            pActor->Update(deltaTime);
+        }
+    }
+
 }
 
 
@@ -140,6 +151,12 @@ glm::vec2 PhysicsScene::NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, g
 
 
 void PhysicsScene::ApplyContactForces(Rigidbody* body1, Rigidbody* body2, glm::vec2 norm, float pen) {
+
+    if ((body1 && body1->isTrigger) || (body2 && body2->isTrigger)) {
+        return;
+    }
+
+
     float body2Mass = body2 ? body2->GetMass() : INT_MAX;
 
     float body1Factor = body2Mass / (body1->GetMass() + body2Mass);

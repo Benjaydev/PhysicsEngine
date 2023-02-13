@@ -43,6 +43,8 @@ void Spring::FixedUpdate(glm::vec2 gravity, float timeStep) {
 	body1->ApplyForce(-force * timeStep, p1);
 	body2->ApplyForce(force * timeStep, p2);
 }
+void Spring::Update(float deltaTime) {
+}
 
 glm::vec2 Spring::GetContact1()
 {
