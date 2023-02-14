@@ -18,13 +18,22 @@ PhysicsScene::~PhysicsScene()
         delete pActor;
     }
     sceneActors.clear();
+
+    for (PhysicsObject* uActor : UIActors)
+    {
+        delete uActor;
+    }
+    UIActors.clear();
 }
 
 void PhysicsScene::AddActor(PhysicsObject* actor)
 {
     sceneActors.push_back(actor);
 }
-
+void PhysicsScene::AddUI(PhysicsObject* actor)
+{
+    UIActors.push_back(actor);
+}
 void PhysicsScene::RemoveActor(PhysicsObject* actor)
 {
     auto iter = std::find(sceneActors.begin(), sceneActors.end(), actor);
@@ -32,7 +41,13 @@ void PhysicsScene::RemoveActor(PhysicsObject* actor)
         sceneActors.erase(iter);
     }
 }
-
+void PhysicsScene::RemoveUI(PhysicsObject* actor)
+{
+    auto iter = std::find(UIActors.begin(), UIActors.end(), actor);
+    if (iter != UIActors.end()) {
+        UIActors.erase(iter);
+    }
+}
 void PhysicsScene::QueueDestroy(PhysicsObject* actor)
 {
     destroyQueue.push_back(actor);
@@ -49,6 +64,9 @@ void PhysicsScene::Draw()
 {
     for (PhysicsObject* pActor : sceneActors) {
         pActor->Draw();
+    }
+    for (PhysicsObject* uActor : UIActors) {
+        uActor->Draw();
     }
 }
 
@@ -88,7 +106,10 @@ void PhysicsScene::Update(float dt)
         {
             pActor->FixedUpdate(gravity, fixedDeltaTime);
         }
-
+        for (PhysicsObject* uActor : UIActors)
+        {
+            uActor->FixedUpdate(gravity, fixedDeltaTime);
+        }
         accumulatedTime -= fixedDeltaTime;
 
 
@@ -103,6 +124,10 @@ void PhysicsScene::Update(float dt)
         for (PhysicsObject* pActor : sceneActors)
         {
             pActor->Update(deltaTime);
+        }
+        for (PhysicsObject* uActor : UIActors)
+        {
+            uActor->Update(deltaTime);
         }
     }
 
@@ -140,6 +165,40 @@ void PhysicsScene::CheckCollisions()
         }
     }
 }
+PhysicsObject* PhysicsScene::CheckCollisionsOnPoint(glm::vec2 point, bool checkUI, bool checkWorldObjects)
+{
+    PhysicsObject* col = nullptr;
+    std::vector<PhysicsObject*> allActors;
+
+    if (checkUI) {
+        col = CheckCollisionsOnPoint(point, UIActors);
+    }
+    if (col == nullptr && checkWorldObjects) {
+        col = CheckCollisionsOnPoint(point, sceneActors);
+    }
+    return col;
+}
+PhysicsObject* PhysicsScene::CheckCollisionsOnPoint(glm::vec2 point, std::vector<PhysicsObject*> actors) {
+    PhysicsObject* col = nullptr;
+    for (PhysicsObject* actor : actors)
+    {
+        if (actor->GetShapeID() < 0) {
+            continue;
+        }
+        else if (actor->GetShapeID() == BOX) {
+            col = Point2Box(point, actor) ? actor : nullptr;
+        }
+        else if (actor->GetShapeID() == CIRCLE) {
+            col = Point2Circle(point, actor) ? actor : nullptr;
+        }
+        else if (actor->GetShapeID() == PLANE) {
+            col = Point2Plane(point, actor) ? actor : nullptr;
+        }
+    }
+
+    return col;
+}
+
 
 glm::vec2 PhysicsScene::NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, glm::vec2 checkPoint)
 {
@@ -322,7 +381,7 @@ bool PhysicsScene::Box2Circle(PhysicsObject* obj1, PhysicsObject* obj2) {
         float penetration = circle->radius - glm::length(circleToBox);
         if (penetration > 0)
         {
-            glm::vec2 direction = glm::normalize(circleToBox);
+            glm::vec2 direction = circleToBox != glm::vec2(0) ? (circleToBox / penetration) : -box->velocity;
             glm::vec2 contact = closestPointOnBoxWorld;
             box->ResolveCollision(circle, contact, &direction, penetration);
         }
@@ -354,4 +413,29 @@ bool PhysicsScene::Circle2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
     }
 
     return false;
+}
+
+bool PhysicsScene::Point2Plane(glm::vec2 point, PhysicsObject* obj) {
+    return false;
+}
+bool PhysicsScene::Point2Box(glm::vec2 point, PhysicsObject* obj) {
+    Box* box = dynamic_cast<Box*>(obj);
+    if (box != nullptr)
+    {
+        float newy = sin(box->orientation) * (point.y - box->position.y) + cos(box->orientation) * (point.x - box->position.x);
+        float newx = cos(box->orientation) * (point.x - box->position.x) - sin(box->orientation) * (point.y - box->position.y);
+
+        return (newy > -box->extents.y) && (newy < box->extents.y) && (newx > -box->extents.x) && (newx < box->extents.x);
+    }
+}
+bool PhysicsScene::Point2Circle(glm::vec2 point, PhysicsObject* obj) {
+    Circle* circle = dynamic_cast<Circle*>(obj);
+    glm::vec2 diff = (circle->position - point);
+    float distSqr = glm::dot(diff, diff);
+
+    if (distSqr < circle->radius * circle->radius) {
+        return true;
+    }
+    return false;
+
 }

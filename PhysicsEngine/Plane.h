@@ -22,6 +22,7 @@ public:
     float distanceToOrigin;
     glm::vec4 colour;
     float restitution = 1.0f;
+    float staticFriction = 0.7f;
 
 protected:
 

@@ -65,8 +65,8 @@ void Rigidbody::Update(float deltaTime) {
         visualPosition = lastPosition + ((position - lastPosition) * visualLerpAlpha);
         visualOrientation = lastOrientation + ((orientation - lastOrientation) * visualLerpAlpha);
 
-        visualLocalX = lastLocalX + ((localX - lastLocalX) * visualLerpAlpha);
-        visualLocalY = lastLocalY + ((localY - lastLocalY) * visualLerpAlpha);
+        visualLocalX = lastLocalX;
+        visualLocalY = lastLocalY;
 
     }
  
@@ -209,7 +209,8 @@ void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2
 
         float coRestitution = PhysicsEngine::CalculateCoefficientRestitution(restitution, actor2->restitution);
 
-        glm::vec2 force = (1.0f + 1) * mass1 * mass2 / (mass1 + mass2) * (v1 - v2) * normal;
+        float j = (1.0f + coRestitution) * mass1 * mass2 / (mass1 + mass2) * (v1 - v2);
+        glm::vec2 force = normal * j;
 
         if (!isTrigger && !actor2->isTrigger) {
             ApplyForce(-force, contact);
@@ -226,14 +227,39 @@ void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2
             actor2->TriggerEnter(this);
         }
 
+
+        // Friction impulse
+        glm::vec2 relV = (actor2->velocity + actor2->angularVelocity - velocity + angularVelocity);
+        glm::vec2 tangent = relV - glm::dot(relV, normal) * normal;
+        if (glm::dot(tangent, tangent) > PhysicsEngine::configValues["V_MIN_FRICTION_THRESHOLD"] * PhysicsEngine::configValues["V_MIN_FRICTION_THRESHOLD"]) {
+            tangent = glm::normalize(tangent);
+
+            float jt = -glm::dot(relV, tangent) / (1 / mass1 + 1 / mass2);
+
+            float mu = PhysicsEngine::CalculateCoefficientStaticFriction(staticFriction, actor2->staticFriction);
+
+            glm::vec2 frictionImpulse;
+            // If energy is low enough, assume object is at or nearly at rest 
+            if (abs(jt) < j * mu) {
+                frictionImpulse = jt * tangent;
+            }
+            // If higher, the object has already broken the initial energy of activation
+            else {
+                float dynamFriction = PhysicsEngine::CalculateCoefficientStaticFriction(dynamicFriction, actor2->dynamicFriction);
+                frictionImpulse = -j * tangent * dynamFriction;
+            }
+
+            // Apply the friction
+            if (!isTrigger && !actor2->isTrigger) {
+                ApplyForce(-((1 / mass) * frictionImpulse), contact);
+                actor2->ApplyForce(((1 / actor2->mass) * frictionImpulse), contact);
+            }
+        }
     }
 
     if (pen > 0) {
         PhysicsScene::ApplyContactForces(this, actor2, normal, pen);
     }
-
-
-   
 
 }
 

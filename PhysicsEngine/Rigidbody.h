@@ -47,7 +47,9 @@ public:
     float mass;
     float restitution = 1.0f;
     float linearDrag = 0.3f;
-    float angularDrag = 0.3f;
+    float angularDrag = 1.0f;
+    float staticFriction = 0.7f;
+    float dynamicFriction = 0.3f;
 
     float orientation = 0.f;
     float angularVelocity = 0.f;

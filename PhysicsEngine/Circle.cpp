@@ -29,7 +29,7 @@ void Circle::Draw()
     glm::vec2 end = glm::vec2(std::cos(visualOrientation), std::sin(visualOrientation)) *
         radius;
 
-    aie::Gizmos::add2DCircle(visualPosition, radius, 12, colour);
+    aie::Gizmos::add2DCircle(visualPosition, radius, 25, colour);
 
     if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
         aie::Gizmos::add2DLine(visualPosition, visualPosition + end, glm::vec4(1, 1, 1, 1));

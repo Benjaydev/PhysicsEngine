@@ -9,6 +9,7 @@
 #include "SoftBody.h"
 #include <iostream>
 #include <limits>
+#include "Levels.h"
 
 PhysicsEngine* PhysicsEngine::physicsEngine = nullptr;
 
@@ -44,46 +45,11 @@ bool PhysicsEngine::startup() {
 	// the following path would be used instead: "./font/consolas.ttf"
 	m_font = new aie::Font("./font/consolas.ttf", 30);
 
-	physicsScene = new PhysicsScene();
-	physicsScene->gravity = glm::vec2(0, -98.2f);
-
-
 	aie::Gizmos::create(0, 0, configValues["MAX_2D_LINES"], configValues["MAX_2D_TRIS"]);
 
-
-	Plane* plane = new Plane(glm::vec2(0, 1), -30, 0.f, glm::vec4(0.5f, 0, 1, 1));
-	Plane* plane2 = new Plane(glm::vec2(1, 0), -90, 0.f, glm::vec4(0.5f, 0, 1, 1));
-	Plane* plane3 = new Plane(glm::vec2(-1, 0), -90, 0.f, glm::vec4(0.5f, 0, 1, 1));
-	Plane* plane4 = new Plane(glm::vec2(0, 1.f), -40, 0.f, glm::vec4(0.5f, 0, 1, 1));
-
-	physicsScene->AddActor(plane);
-	physicsScene->AddActor(plane2);
-	physicsScene->AddActor(plane3);
-
-	//Circle* circle = new Circle(glm::vec2(0, 0), glm::vec2(0), 10.f, 10.f, 1.f, glm::vec4(1, 1, 1, 1));
-	//circle->isTrigger = true;
-	//circle->isKinematic = true;
-	//physicsScene->AddActor(circle);
-
-	//circle->triggerEnterCallback = [=](PhysicsObject* other) { std::cout << "Enter:" <<
-	//	other << std::endl; };
-	//circle->triggerExitCallback = [=](PhysicsObject* other) { std::cout << "Exit:" <<
-	//	other << std::endl; };
-
-
-
-
-	//physicsScene->AddActor(plane4);
-
-
-	/*std::vector<std::string> sb;
-	sb.push_back("000000");
-	sb.push_back("000000");
-	sb.push_back("000000");
-	sb.push_back("000000");
-
-
-	SoftBody::Build(physicsScene, glm::vec2(-50, 0), 5.0f, 10.0f, 1.f, sb);*/
+	physicsScene = new PhysicsScene();
+	Levels* levels = new Levels();
+	levels->Level1(physicsScene);
 
 	return true;
 }
@@ -150,6 +116,10 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 
 
 
+	if (input->wasKeyPressed(aie::INPUT_KEY_O)) {
+		Levels::SaveToConsole(physicsScene->GetSceneActors());
+	}
+
 	if (input->wasKeyPressed(aie::INPUT_KEY_R)) {
 		LoadConfig();
 	}
@@ -168,6 +138,15 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 
 	glm::vec2 worldPos = GetWorldSpacePoint(x, y);
 
+
+	if (input->wasMouseButtonPressed(0)) {
+		PhysicsObject* col = physicsScene->CheckCollisionsOnPoint(worldPos, true);
+		if (col != nullptr) {
+			std::cout << "Collide" << std::endl;
+		}
+	}
+
+
 	if (input->wasKeyPressed(aie::INPUT_KEY_X)) {
 		Rope(ropeSize, worldPos, true);
 	}
@@ -176,6 +155,8 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 	}
 
 	shouldErase = input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT);
+
+	bool isKinematic = input->isKeyDown(aie::INPUT_KEY_LEFT_CONTROL);
 
 	// Circle drag
 	if (input->isKeyDown(aie::INPUT_KEY_C) && input->isMouseButtonDown(0)) {
@@ -197,12 +178,13 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 		float radius = glm::length(dragEnd - dragStart) * 0.5f;
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
-		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f, radius), 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
+		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f, radius), 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
 		if (shouldErase) {
 			circle->eraser = shouldErase;
 			// Adding some angular velocity fixes some collision detection problems for some reason
 			circle->angularVelocity = 2.0f;
 		}
+		circle->isKinematic = isKinematic;
 		physicsScene->AddActor(circle);
 	}
 
@@ -226,13 +208,13 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 		glm::vec2 diff = (dragEnd - dragStart) * 0.5f;
 		glm::vec2 center = (dragEnd + dragStart) * 0.5f;
 
-		Box* box = new Box(center, glm::vec2(fmax(0.1f, abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 1.0f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
+		Box* box = new Box(center, glm::vec2(fmax(0.1f, abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
 		if (shouldErase) {
 			box->eraser = shouldErase;
 			// Adding some angular velocity fixes some collision detection problems for some reason
 			box->angularVelocity = 2.0f;
 		}
-
+		box->isKinematic = isKinematic;
 		physicsScene->AddActor(box);
 	}
 
@@ -261,7 +243,7 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 
 		float dist = -glm::dot(toOrigin, normal);
 
-		Plane* plane = new Plane(normal, dist, 0.f, glm::vec4(0.5f, 0, 1, 1));
+		Plane* plane = new Plane(normal, dist, 0.5f, glm::vec4(0.5f, 0, 1, 1));
 		//box->eraser = shouldErase;
 		physicsScene->AddActor(plane);
 	}
@@ -374,7 +356,7 @@ void PhysicsEngine::draw() {
 
 	if (configSettings["TEST_MODE"] == 1) {
 		char zoom[32];
-		sprintf_s(zoom, 32, "Zoom: %.2fx", round((orthoSize / 100) * 100) / 100);
+		sprintf_s(zoom, 32, "Zoom: %.2fx", round((orthoSize / 1000) * 100) / 100);
 		m_2dRenderer->drawText(m_font, zoom, 5, 40);
 
 		m_2dRenderer->end();

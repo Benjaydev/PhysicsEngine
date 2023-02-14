@@ -1,13 +1,13 @@
 #pragma once
 #include "Spring.h"
 
-Spring::Spring(Rigidbody* _body1, Rigidbody* _body2, float _springCoefficient, float _damping, float _restLength, glm::vec2 _contact1, glm::vec2 _contact2) :
+Spring::Spring(Rigidbody* _body1, Rigidbody* _body2, float _springCoefficient, float _damping, float _restLength, glm::vec4 _colour, glm::vec2 _contact1, glm::vec2 _contact2) :
 	PhysicsObject(JOINT) {
 	body1 = _body1;
 	body2 = _body2;
 	springCoefficient = _springCoefficient;
 	damping = _damping;
-
+	colour = _colour;
 	if (restLength == 0) {
 		glm::vec2 diff = (GetContact2() - GetContact1());
 		restLength = glm::length(diff);
@@ -36,9 +36,9 @@ void Spring::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
 	// cap the spring force to 1000 N to prevent numerical instability 
 	const float threshold = 1000.0f;
-	float forceMag = glm::length(force);
-	if (forceMag > threshold)
-		force *= threshold / forceMag;
+	float forceMag = glm::dot(force, force);
+	if (forceMag > threshold* threshold)
+		force *= threshold / sqrt(forceMag);
 
 	body1->ApplyForce(-force * timeStep, p1);
 	body2->ApplyForce(force * timeStep, p2);

@@ -8,6 +8,6 @@ class SoftBody
 {
 public:
 	static void Build(PhysicsScene* scene, glm::vec2 position, float spacing, float
-		springForce, float damping, std::vector<std::string>& strings);
+		springForce, float damping, std::vector<std::string>& strings, float mass = 1.0f, float radius = 2.0f);
 };
 

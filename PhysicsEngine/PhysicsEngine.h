@@ -37,6 +37,7 @@ public:
 	static std::string Encrypt(std::string text, std::string key);
 	static std::string Decrypt(std::string text, std::string key);
 
+
 	void Rope(int num, glm::vec2 position, bool isKinetic = true);
 
 	static std::map<std::string, int> configSettings;
@@ -63,7 +64,7 @@ public:
 	bool shouldErase = false;
 
 
-	float orthoSize = 100;
+	float orthoSize = 1000;
 	const float maxOrthoSize =  10000000;
 	glm::vec2 orthoCenter = glm::vec2(0, 0);
 

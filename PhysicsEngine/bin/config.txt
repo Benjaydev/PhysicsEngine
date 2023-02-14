@@ -5,7 +5,7 @@ ENCRYPT=0
 TEST_MODE=1
 
 # How should the coefficient of restitution be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
-RESTITUTION_CALC=1
+RESTITUTION_CALC=0
 
 # How should the coefficient of static friction be calculated | 0 - Multiply | 1- Average | 2 - Min | 3 - Max
 STATFRICTION_CALC=1
@@ -13,6 +13,7 @@ STATFRICTION_CALC=1
 # The minimum value of a rigidbody's velocities before stopping | 0 to inf 
 V_MIN_LINEAR_THRESHOLD=0.01
 V_MIN_ANGULAR_THRESHOLD=1
+V_MIN_FRICTION_THRESHOLD=0.01
 
 # How often should physics update | Seconds
 V_FIXED_UPDATE=0.01;
@@ -22,7 +23,7 @@ SHOULD_LERP_POSITIONS=1
 
 # Debug
 # Should debug lines be shown for physics objects and rigidbodies (velocities, gravity, normals) | 0 - No | 1 - Yes
-ACTIVE_DEBUG_LINES=0
+ACTIVE_DEBUG_LINES=1
 # Should fps be shown | 0 - No | 1 - Yes
 SHOW_FPS=1
 
