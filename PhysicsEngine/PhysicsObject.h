@@ -27,7 +27,7 @@ public:
 
     ShapeType GetShapeID() { return shapeID; };
 
-
+    glm::vec4 colour;
 
 protected:
 

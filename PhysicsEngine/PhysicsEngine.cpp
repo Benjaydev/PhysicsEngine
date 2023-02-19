@@ -107,6 +107,16 @@ void PhysicsEngine::update(float deltaTime) {
 		TestModeUpdate(deltaTime);
 	}
 
+	if (input->isKeyDown(aie::INPUT_KEY_L)) {
+		for (int i = 0; i < 1; i++) {
+			Circle* circle = new Circle(glm::vec2(0, 500), glm::vec2(1000, -100), 10.0f, fmax(0.1f, 10), 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
+			physicsScene->AddActor(circle);
+		}
+
+
+
+	}
+	std::cout << physicsScene->spacePartition.size() << std::endl;
 
 }
 void PhysicsEngine::TestModeUpdate(float deltaTime) {
@@ -140,12 +150,24 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 
 
 	if (input->wasMouseButtonPressed(0)) {
-		PhysicsObject* col = physicsScene->CheckCollisionsOnPoint(worldPos, true);
-		if (col != nullptr) {
-			std::cout << "Collide" << std::endl;
+		PhysicsObject* col = physicsScene->CheckCollisionsOnPoint(worldPos, false, true);
+
+		// Reset last object
+		if (selectedObject != nullptr) {
+			selectedObject->colour -= 0.75;
 		}
+
+		if (col != nullptr && selectedObject != col) {
+			std::cout << "Collide" << std::endl;
+			col->colour += 0.75;
+		}
+		selectedObject = col;
 	}
 
+	if (selectedObject != nullptr && (input->wasKeyPressed(aie::INPUT_KEY_DELETE) || input->wasKeyPressed(aie::INPUT_KEY_BACKSPACE))) {
+		physicsScene->RemoveActor(selectedObject);
+		selectedObject = nullptr;
+	}
 
 	if (input->wasKeyPressed(aie::INPUT_KEY_X)) {
 		Rope(ropeSize, worldPos, true);
@@ -322,6 +344,14 @@ void PhysicsEngine::draw() {
 
 			char info[100];
 			sprintf_s(info, 100, "Plane: Normal: (%.2f,%.2f), Dist: %i | [Tab] Reverse normal", normal.x, normal.y, (int)dist);
+			m_2dRenderer->drawText(m_font, info, 5, 10);
+		}
+		else if (selectedObject != nullptr) {
+
+
+			std::string shapeType = selectedObject->GetShapeID() == BOX ? "Box" : selectedObject->GetShapeID() == CIRCLE ? "Circle" : "Plane";
+			char info[100];
+			sprintf_s(info, 100, "Selected Object: %s", shapeType.c_str());
 			m_2dRenderer->drawText(m_font, info, 5, 10);
 		}
 		else {

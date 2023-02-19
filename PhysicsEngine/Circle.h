@@ -17,6 +17,5 @@ public:
 
     float radius;
 
-protected:
-    glm::vec4 colour;
+    void CalculateBounds() override;
 };

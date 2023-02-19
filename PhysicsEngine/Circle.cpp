@@ -26,14 +26,22 @@ void Circle::Update(float deltaTime) {
 
 void Circle::Draw()
 {
-    glm::vec2 end = glm::vec2(std::cos(visualOrientation), std::sin(visualOrientation)) *
-        radius;
-
-    aie::Gizmos::add2DCircle(visualPosition, radius, 25, colour);
+    aie::Gizmos::add2DCircle(visualPosition, radius, 12, colour);
 
     if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1) {
+        glm::vec2 end = glm::vec2(std::cos(visualOrientation), std::sin(visualOrientation)) *
+            radius;
         aie::Gizmos::add2DLine(visualPosition, visualPosition + end, glm::vec4(1, 1, 1, 1));
     }
     Rigidbody::Draw();
 
+}
+
+void Circle::CalculateBounds()
+{
+    minBounds.x = position.x - radius;
+    minBounds.y = position.y - radius;
+
+    maxBounds.x = position.x + radius;
+    maxBounds.y = position.y + radius;
 }

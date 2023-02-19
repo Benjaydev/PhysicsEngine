@@ -46,6 +46,12 @@ Rigidbody::~Rigidbody()
 }
 
 void Rigidbody::Draw() {
+    aie::Gizmos::add2DLine(minBounds, glm::vec2(minBounds.x, maxBounds.y), glm::vec4(1, 0.5f, 0, 1));
+    aie::Gizmos::add2DLine(minBounds, glm::vec2(maxBounds.x, minBounds.y), glm::vec4(1, 0.5f, 0, 1));
+
+    aie::Gizmos::add2DLine(maxBounds, glm::vec2(minBounds.x, maxBounds.y), glm::vec4(1, 0.5f, 0, 1));
+    aie::Gizmos::add2DLine(maxBounds, glm::vec2(maxBounds.x, minBounds.y), glm::vec4(1, 0.5f, 0, 1));
+
     // Show gravity
     if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1 && !eraser) {
         aie::Gizmos::add2DLine(visualPosition, visualPosition + PhysicsScene::gravity, glm::vec4(1, 0.5f, 0, 1));
@@ -91,6 +97,7 @@ void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
     localX = glm::normalize(glm::vec2(cs, sn));
     localY = glm::normalize(glm::vec2(-sn, cs));
 
+    CalculateBounds();
 
     // Trigger checks 
     if (isTrigger)

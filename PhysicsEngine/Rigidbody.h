@@ -25,6 +25,7 @@ public:
 
     void SetVelocity(glm::vec2 _velocity) { velocity = _velocity; }
 
+    virtual void CalculateBounds() = 0;
 
     void ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2* collisionNormal = nullptr, float pen = 0);
 
@@ -65,6 +66,9 @@ public:
 
     int frameCount = 0;
 
+    glm::vec2 minBounds;
+    glm::vec2 maxBounds;
+
 protected:
     void TriggerEnter(PhysicsObject* other);
 
@@ -81,4 +85,6 @@ protected:
 
     glm::vec2 visualLocalX;
     glm::vec2 visualLocalY;
+
+
 };

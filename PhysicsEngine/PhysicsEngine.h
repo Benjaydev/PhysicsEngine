@@ -60,9 +60,9 @@ public:
 	bool boxDrag = false;
 	bool planeDrag = false;
 	bool planeClockwise = true;
-
 	bool shouldErase = false;
 
+	PhysicsObject* selectedObject = nullptr;
 
 	float orthoSize = 1000;
 	const float maxOrthoSize =  10000000;

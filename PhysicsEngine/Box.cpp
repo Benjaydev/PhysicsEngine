@@ -1,4 +1,5 @@
 #include "Box.h"
+#include <vector>
 
 Box::Box(glm::vec2 _position, glm::vec2 _extents, glm::vec2 _velocity, float _mass, float _restitution, glm::vec4 _colour) :
 	Rigidbody(BOX, _position, _velocity, 0, _mass, _restitution) {
@@ -28,6 +29,9 @@ void Box::Draw() {
 	aie::Gizmos::add2DTri(p1, p2, p4, colour);
 	aie::Gizmos::add2DTri(p1, p4, p3, colour);
 
+	glm::vec2 end = glm::vec2(std::cos(visualOrientation), std::sin(visualOrientation)) *
+		extents.x;
+	aie::Gizmos::add2DLine(visualPosition, visualPosition + end, glm::vec4(1, 1, 1, 1));
 
 	Rigidbody::Draw();
 }
@@ -108,4 +112,39 @@ bool Box::CheckBoxCorners(const Box& box, glm::vec2& contact, int& numContacts, 
 		res = true;
 	}
 	return res;
+}
+
+
+void Box::CalculateBounds()
+{
+	glm::vec2 p1 = position - localX * extents.x - localY * extents.y;
+	glm::vec2 p2 = position + localX * extents.x - localY * extents.y;
+	glm::vec2 p3 = position - localX * extents.x + localY * extents.y;
+	glm::vec2 p4 = position + localX * extents.x + localY * extents.y;
+	std::vector<glm::vec2> ps = { p2, p3, p4 };
+
+	glm::vec2 min = p1;
+	glm::vec2 max = p1;
+
+	aie::Gizmos::add2DCircle(p1, 1, 12, glm::vec4(1));
+	aie::Gizmos::add2DCircle(p2, 1, 12, glm::vec4(1));
+	aie::Gizmos::add2DCircle(p3, 1, 12, glm::vec4(1));
+	aie::Gizmos::add2DCircle(p4, 1, 12, glm::vec4(1));
+
+	for (int i = 0; i < 3; i++) {
+		if (ps[i].x < min.x) {
+			min.x = ps[i].x;
+		}
+		else if (ps[i].x > max.x) {
+			max.x = ps[i].x;
+		}
+		if (ps[i].y < min.y) {
+			min.y = ps[i].y;
+		}
+		else if (ps[i].y > max.y) {
+			max.y = ps[i].y;
+		}
+	}
+	minBounds = min;
+	maxBounds = max;
 }

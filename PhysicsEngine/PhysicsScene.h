@@ -4,7 +4,7 @@
 #include "Circle.h"
 #include "Box.h"
 #include "Plane.h"
-
+#include <map>
 
 class PhysicsScene
 {
@@ -49,11 +49,15 @@ public:
 	static glm::vec2 gravity;
 
 	std::vector<PhysicsObject*> GetSceneActors() { return sceneActors; }
+	std::map<int, std::vector<Rigidbody*>> spacePartition;
 
 protected:
 
 	std::vector<PhysicsObject*> sceneActors;
 	std::vector<PhysicsObject*> UIActors;
 	std::vector<PhysicsObject*> destroyQueue;
+
+
+	int gridSize = 200;
 };
 

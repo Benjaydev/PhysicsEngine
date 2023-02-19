@@ -3,6 +3,8 @@
 #include <iostream>
 #include "SoftBody.h"
 
+
+
 void Levels::SaveToConsole(std::vector<PhysicsObject*> actors) {
 	int i = 0;
 
@@ -53,45 +55,50 @@ void Levels::Level1(PhysicsScene* scene) {
 	Plane* actor2 = new Plane(glm::vec2(0.657498, 0.753457), -314.703, 0.5, glm::vec4(0.5, 0, 1, 1));
 	scene->AddActor(actor2);
 
-	Box* actor3 = new Box(glm::vec2(1702.78, 25.4881), glm::vec2(499.636, 53.9772), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor3->isKinematic = true;
+	Plane* actor3 = new Plane(glm::vec2(-0.657498, 0.753457), -314.703, 0.5, glm::vec4(0.5, 0, 1, 1));
 	scene->AddActor(actor3);
-	Box* actor4 = new Box(glm::vec2(1295.09, 201.861), glm::vec2(48.1274, 121.68), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor4->isKinematic = true;
-	scene->AddActor(actor4);
-	Box* actor5 = new Box(glm::vec2(1706.44, 378.853), glm::vec2(570.264, 53.5757), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor5->isKinematic = true;
-	scene->AddActor(actor5);
-	Box* actor6 = new Box(glm::vec2(2081.47, 201.861), glm::vec2(44.4951, 119.864), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor6->isKinematic = true;
-	scene->AddActor(actor6);
-	Box* actor7 = new Box(glm::vec2(1451.13, 533.713), glm::vec2(39.5552, 99.9868), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor7->isKinematic = true;
-	scene->AddActor(actor7);
-	Box* actor8 = new Box(glm::vec2(1719.22, 694.131), glm::vec2(380.17, 58.2341), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor8->isKinematic = true;
-	scene->AddActor(actor8);
-	Box* actor9 = new Box(glm::vec2(2009.3, 535.91), glm::vec2(37.3577, 99.9868), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
-	//actor9->isKinematic = true;
-	scene->AddActor(actor9);
-	Circle* actor10 = new Circle(glm::vec2(1740.1, 501.929), glm::vec2(0), 10, 69.5002, 0, glm::vec4(0, 1, 0, 1));
-	//actor10->isKinematic = true;
-	scene->AddActor(actor10);
-	Circle* actor11 = new Circle(glm::vec2(1410.47, 820.488), glm::vec2(0), 10, 63.7374, 0, glm::vec4(0, 1, 0, 1));
-	//actor11->isKinematic = true;
-	scene->AddActor(actor11);
-	Circle* actor12 = new Circle(glm::vec2(1446.73, 139.259), glm::vec2(0), 10, 55.1133, 0, glm::vec4(0, 1, 0, 1));
-	//actor12->isKinematic = true;
-	scene->AddActor(actor12);
-	Circle* actor13 = new Circle(glm::vec2(2232.34, 508.441), glm::vec2(0), 10, 73.4525, 0, glm::vec4(0, 1, 0, 1));
-	//actor13->isKinematic = true;
-	scene->AddActor(actor13);
+	//Box* actor3 = new Box(glm::vec2(1702.78, 25.4881), glm::vec2(499.636, 53.9772), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor3->isKinematic = true;
+	//scene->AddActor(actor3);
+	//Box* actor4 = new Box(glm::vec2(1295.09, 201.861), glm::vec2(48.1274, 121.68), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor4->isKinematic = true;
+	//scene->AddActor(actor4);
+	//Box* actor5 = new Box(glm::vec2(1706.44, 378.853), glm::vec2(570.264, 53.5757), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor5->isKinematic = true;
+	//scene->AddActor(actor5);
+	//Box* actor6 = new Box(glm::vec2(2081.47, 201.861), glm::vec2(44.4951, 119.864), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor6->isKinematic = true;
+	//scene->AddActor(actor6);
+	//Box* actor7 = new Box(glm::vec2(1451.13, 533.713), glm::vec2(39.5552, 99.9868), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor7->isKinematic = true;
+	//scene->AddActor(actor7);
+	//Box* actor8 = new Box(glm::vec2(1719.22, 694.131), glm::vec2(380.17, 58.2341), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor8->isKinematic = true;
+	//scene->AddActor(actor8);
+	//Box* actor9 = new Box(glm::vec2(2009.3, 535.91), glm::vec2(37.3577, 99.9868), glm::vec2(0), 90, 0, glm::vec4(1, 0, 0, 1));
+	////actor9->isKinematic = true;
+	//scene->AddActor(actor9);
+	//Circle* actor10 = new Circle(glm::vec2(1740.1, 501.929), glm::vec2(0), 10, 69.5002, 0, glm::vec4(0, 1, 0, 1));
+	////actor10->isKinematic = true;
+	//scene->AddActor(actor10);
+	//Circle* actor11 = new Circle(glm::vec2(1410.47, 820.488), glm::vec2(0), 10, 63.7374, 0, glm::vec4(0, 1, 0, 1));
+	////actor11->isKinematic = true;
+	//scene->AddActor(actor11);
+	//Circle* actor12 = new Circle(glm::vec2(1446.73, 139.259), glm::vec2(0), 10, 55.1133, 0, glm::vec4(0, 1, 0, 1));
+	////actor12->isKinematic = true;
+	//scene->AddActor(actor12);
+	//Circle* actor13 = new Circle(glm::vec2(2232.34, 508.441), glm::vec2(0), 10, 73.4525, 0, glm::vec4(0, 1, 0, 1));
+	////actor13->isKinematic = true;
+	//scene->AddActor(actor13);
 
 
-	Box* ui = new Box(glm::vec2(0,0), glm::vec2(100, 100), glm::vec2(0), 90, 0, glm::vec4(1, 1, 0, 1));
+	/*Box* ui = new Box(glm::vec2(0,0), glm::vec2(100, 100), glm::vec2(0), 90, 0, glm::vec4(1, 1, 0, 1));
 	ui->isKinematic = true;
-	scene->AddUI(ui);
+	scene->AddUI(ui);*/
 
+	/*Circle* ui = new Circle(glm::vec2(0,0), glm::vec2(0), 10, 73.4525, 0, glm::vec4(0, 1, 0, 1));
+	ui->isKinematic = true;
+	scene->AddUI(ui);*/
 
 	/*actor3->collisionCallback = [=](PhysicsObject* other) { actor3->isKinematic = false; };
 	actor4->collisionCallback = [=](PhysicsObject* other) { actor4->isKinematic = false; };

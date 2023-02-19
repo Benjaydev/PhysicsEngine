@@ -18,7 +18,8 @@ public:
 
 	// The halfedge lengths  
 	glm::vec2 extents; 
-	glm::vec4 colour;
+
+	void CalculateBounds() override;
 
 
 

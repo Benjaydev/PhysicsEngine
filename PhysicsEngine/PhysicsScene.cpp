@@ -1,7 +1,9 @@
 #pragma once
 #include "PhysicsScene.h"
 #include "PhysicsEngine.h"
-
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <iostream>
 float PhysicsScene::fixedDeltaTime = 0.01f;
 glm::vec2 PhysicsScene::gravity = glm::vec2(0, -10);
 
@@ -102,9 +104,77 @@ void PhysicsScene::Update(float dt)
 
     while (accumulatedTime >= fixedDeltaTime)
     {
+        spacePartition.clear();
+        int gridCount = ((INT_MAX/2) - ((INT_MAX / 2) % gridSize)) / gridSize;
         for (PhysicsObject* pActor : sceneActors)
         {
             pActor->FixedUpdate(gravity, fixedDeltaTime);
+
+            Rigidbody* body = dynamic_cast<Rigidbody*>(pActor);
+
+            if (pActor->GetShapeID() == BOX) {
+                //std::cout << body->position.x << ", " << body->position.y << std::endl;
+            }
+
+            if (body != nullptr) {
+                glm::vec2 max = glm::vec2((INT_MAX / 2), (INT_MAX / 2));
+                std::vector<glm::vec2> ps = { body->minBounds + max , body->maxBounds + max, glm::vec2(body->minBounds.x, body->maxBounds.y) + max, glm::vec2(body->minBounds.y, body->maxBounds.x) + max };
+
+                int toGridx = ((ps[0].x - ((int)ps[0].x % gridSize)) / gridSize);
+                int toGridy = ((ps[0].y - ((int)ps[0].y % gridSize)) / gridSize);
+
+                int minGridPointx = toGridx;
+                int minGridPointy = toGridx;
+                int maxGridPointx = toGridy;
+                int maxGridPointy = toGridy;
+
+
+                // Get the range of grids that this object is overlapping
+                for (int i = 0; i < 3; i++) {
+                    // Convert to grid point
+                    toGridx = ((ps[i].x - ((int)ps[i].x % gridSize)) / gridSize);
+                    toGridy = ((ps[i].y - ((int)ps[i].y % gridSize)) / gridSize);
+
+                    if (toGridx < minGridPointx) {
+                        minGridPointx = toGridx;
+                    }
+                    else if (toGridx > maxGridPointx) {
+                        maxGridPointx = toGridx;
+                    }
+                    if (toGridy < minGridPointy) {
+                        minGridPointy = toGridy;
+                    }
+                    else if (toGridy > maxGridPointy) {
+                        maxGridPointy = toGridy;
+                    }
+                }
+
+
+                // Get every point in grid within range
+                for (int y = minGridPointy; y < maxGridPointy+1; y++) {
+                    for (int x = minGridPointx; x < maxGridPointx+1; x++) {
+
+                        if (y == minGridPointy || x == minGridPointx || x == maxGridPointx || y == maxGridPointy) {
+                            int pos = x + (y * gridCount);
+
+                            // See if grid point already exists
+                            auto it = spacePartition.find(pos);
+                            if (it != spacePartition.end()) {
+                                it->second.push_back(body);
+                            }
+                            // If not, create one
+                            else {
+                                std::vector<Rigidbody*> newBodies = std::vector<Rigidbody*>();
+                                newBodies.push_back(body);
+                                spacePartition.insert({ pos, newBodies });
+                            }
+                        }                  
+                    }
+                }
+
+
+            }
+
         }
         for (PhysicsObject* uActor : UIActors)
         {
@@ -150,7 +220,8 @@ void PhysicsScene::CheckCollisions()
             int shapeId2 = object2->GetShapeID();
 
 
-            if (shapeId1 < 0 || shapeId2 < 0) {
+            // Only check planes like this
+            if (shapeId1 < 0 || shapeId2 < 0 || (shapeId1 != PLANE && shapeId2 != PLANE)) {
                 continue;
             }
 
@@ -164,6 +235,73 @@ void PhysicsScene::CheckCollisions()
             }
         }
     }
+
+    std::map<PhysicsObject*, std::vector<PhysicsObject*>> previousChecks;
+    // Check space partition
+    for (auto it = spacePartition.begin(); it != spacePartition.end(); ++it) {
+        for (int outer = 0; outer < it->second.size(); outer++) {
+            for (int inner = outer + 1; inner < it->second.size(); inner++) {
+                PhysicsObject* object1 = it->second[outer];
+                PhysicsObject* object2 = it->second[inner];
+
+                int shapeId1 = object1->GetShapeID();
+                int shapeId2 = object2->GetShapeID();
+
+
+                // Only check planes like this
+                if (shapeId1 < 0 || shapeId2 < 0) {
+                    continue;
+                }
+
+                // using function pointers
+                int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
+                CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
+                if (collisionFunctionPtr != nullptr)
+                {
+                    //bool added = false;
+                    //// Search all checks
+                    //auto previous = previousChecks.find(object1);
+                    //if (previous != previousChecks.end()) {
+                    //    // If the object has collided with second object
+                    //    auto exists = std::find(previous->second.begin(), previous->second.end(), object2);
+                    //    // If it has already collided
+                    //    if (exists != previous->second.end()) {
+                    //        continue;
+                    //    }
+                    //    previous->second.push_back(object2);
+                    //    added = true;
+                    //}
+                    //else {
+                    //    previousChecks.insert({ object1, std::vector<PhysicsObject*>({object2}) });
+                    //    added = true;
+                    //}
+
+                    //// Search all checks if last one was unsuccessful 
+                    //if (!added) {
+                    //    auto previous2 = previousChecks.find(object2);
+                    //    if (previous2 != previousChecks.end()) {
+                    //        // If the object has collided with second object
+                    //        auto exists = std::find(previous2->second.begin(), previous2->second.end(), object1);
+                    //        // If it has already collided
+                    //        if (exists != previous2->second.end()) {
+                    //            continue;
+                    //        }
+                    //        previous2->second.push_back(object1);
+                    //    }
+                    //    else {
+                    //        previousChecks.insert({ object2, std::vector<PhysicsObject*>({object1}) });
+                    //    }
+                    //}
+
+
+                    // did a collision occur?
+                    collisionFunctionPtr(object1, object2);
+
+                }
+            }
+        }
+    }
+
 }
 PhysicsObject* PhysicsScene::CheckCollisionsOnPoint(glm::vec2 point, bool checkUI, bool checkWorldObjects)
 {
@@ -186,13 +324,13 @@ PhysicsObject* PhysicsScene::CheckCollisionsOnPoint(glm::vec2 point, std::vector
             continue;
         }
         else if (actor->GetShapeID() == BOX) {
-            col = Point2Box(point, actor) ? actor : nullptr;
+            col = Point2Box(point, actor) ? actor : col;
         }
         else if (actor->GetShapeID() == CIRCLE) {
-            col = Point2Circle(point, actor) ? actor : nullptr;
+            col = Point2Circle(point, actor) ? actor : col;
         }
         else if (actor->GetShapeID() == PLANE) {
-            col = Point2Plane(point, actor) ? actor : nullptr;
+            col = Point2Plane(point, actor) ? actor : col;
         }
     }
 
@@ -379,11 +517,16 @@ bool PhysicsScene::Box2Circle(PhysicsObject* obj1, PhysicsObject* obj2) {
         glm::vec2 closestPointOnBoxWorld = box->position + closestPointOnBoxBox.x * box->localX + closestPointOnBoxBox.y * box->localY;
         glm::vec2 circleToBox = circle->position - closestPointOnBoxWorld;
         float penetration = circle->radius - glm::length(circleToBox);
+
+        
         if (penetration > 0)
         {
-            glm::vec2 direction = circleToBox != glm::vec2(0) ? (circleToBox / penetration) : -box->velocity;
+            glm::vec2 direction = circleToBox != glm::vec2(0) ? (circleToBox / penetration) : box->isKinematic ? -circle->velocity : -box->velocity;
+
+
             glm::vec2 contact = closestPointOnBoxWorld;
             box->ResolveCollision(circle, contact, &direction, penetration);
+            return true;
         }
     }
 
@@ -422,10 +565,15 @@ bool PhysicsScene::Point2Box(glm::vec2 point, PhysicsObject* obj) {
     Box* box = dynamic_cast<Box*>(obj);
     if (box != nullptr)
     {
-        float newy = sin(box->orientation) * (point.y - box->position.y) + cos(box->orientation) * (point.x - box->position.x);
-        float newx = cos(box->orientation) * (point.x - box->position.x) - sin(box->orientation) * (point.y - box->position.y);
+        // Rotate point to be relative to box orientation
+        glm::vec2 diff = box->position - point;
+        float radius = sqrt((diff.x * diff.x) + (diff.y * diff.y));
+        float newAngle = atan2(point.y - box->position.y, point.x - box->position.x) + box->orientation;
+        float newX = box->position.x + radius * cos(newAngle);
+        float newY = box->position.y + radius * sin(newAngle);
 
-        return (newy > -box->extents.y) && (newy < box->extents.y) && (newx > -box->extents.x) && (newx < box->extents.x);
+        // If inside bounds
+        return (newY > box->position.y - box->extents.y) && (newY < box->position.y + box->extents.y) && (newX > box->position.x - box->extents.x) && (newX < box->position.x + box->extents.x);
     }
 }
 bool PhysicsScene::Point2Circle(glm::vec2 point, PhysicsObject* obj) {
