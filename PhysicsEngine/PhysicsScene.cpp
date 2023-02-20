@@ -105,7 +105,7 @@ void PhysicsScene::Update(float dt)
     while (accumulatedTime >= fixedDeltaTime)
     {
         spacePartition.clear();
-        int gridCount = ((INT_MAX/2) - ((INT_MAX / 2) % gridSize)) / gridSize;
+        int gridCount = floor((INT_MAX/2) / gridSize);
         for (PhysicsObject* pActor : sceneActors)
         {
             pActor->FixedUpdate(gravity, fixedDeltaTime);
@@ -120,8 +120,8 @@ void PhysicsScene::Update(float dt)
                 glm::vec2 max = glm::vec2((INT_MAX / 2), (INT_MAX / 2));
                 std::vector<glm::vec2> ps = { body->minBounds + max , body->maxBounds + max, glm::vec2(body->minBounds.x, body->maxBounds.y) + max, glm::vec2(body->minBounds.y, body->maxBounds.x) + max };
 
-                int toGridx = ((ps[0].x - ((int)ps[0].x % gridSize)) / gridSize);
-                int toGridy = ((ps[0].y - ((int)ps[0].y % gridSize)) / gridSize);
+                int toGridx = floor(ps[0].x / gridSize);
+                int toGridy = floor(ps[0].y / gridSize);
 
                 int minGridPointx = toGridx;
                 int minGridPointy = toGridx;
@@ -132,8 +132,8 @@ void PhysicsScene::Update(float dt)
                 // Get the range of grids that this object is overlapping
                 for (int i = 0; i < 3; i++) {
                     // Convert to grid point
-                    toGridx = ((ps[i].x - ((int)ps[i].x % gridSize)) / gridSize);
-                    toGridy = ((ps[i].y - ((int)ps[i].y % gridSize)) / gridSize);
+                    toGridx = floor(ps[i].x / gridSize);
+                    toGridy = floor(ps[i].y / gridSize);
 
                     if (toGridx < minGridPointx) {
                         minGridPointx = toGridx;
@@ -236,13 +236,25 @@ void PhysicsScene::CheckCollisions()
         }
     }
 
-    std::map<PhysicsObject*, std::vector<PhysicsObject*>> previousChecks;
+    std::vector<std::pair<PhysicsObject*, PhysicsObject*>> previousChecks;
     // Check space partition
     for (auto it = spacePartition.begin(); it != spacePartition.end(); ++it) {
         for (int outer = 0; outer < it->second.size(); outer++) {
             for (int inner = outer + 1; inner < it->second.size(); inner++) {
                 PhysicsObject* object1 = it->second[outer];
                 PhysicsObject* object2 = it->second[inner];
+
+                /*bool found = false;
+                for (int pair = 0; pair < previousChecks.size(); pair++) {
+                    if ((previousChecks[pair].first == object1 && previousChecks[pair].second == object2) || (previousChecks[pair].first == object2 && previousChecks[pair].second == object1)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    continue;
+                }*/
+
 
                 int shapeId1 = object1->GetShapeID();
                 int shapeId2 = object2->GetShapeID();
@@ -258,41 +270,8 @@ void PhysicsScene::CheckCollisions()
                 CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
                 if (collisionFunctionPtr != nullptr)
                 {
-                    //bool added = false;
-                    //// Search all checks
-                    //auto previous = previousChecks.find(object1);
-                    //if (previous != previousChecks.end()) {
-                    //    // If the object has collided with second object
-                    //    auto exists = std::find(previous->second.begin(), previous->second.end(), object2);
-                    //    // If it has already collided
-                    //    if (exists != previous->second.end()) {
-                    //        continue;
-                    //    }
-                    //    previous->second.push_back(object2);
-                    //    added = true;
-                    //}
-                    //else {
-                    //    previousChecks.insert({ object1, std::vector<PhysicsObject*>({object2}) });
-                    //    added = true;
-                    //}
 
-                    //// Search all checks if last one was unsuccessful 
-                    //if (!added) {
-                    //    auto previous2 = previousChecks.find(object2);
-                    //    if (previous2 != previousChecks.end()) {
-                    //        // If the object has collided with second object
-                    //        auto exists = std::find(previous2->second.begin(), previous2->second.end(), object1);
-                    //        // If it has already collided
-                    //        if (exists != previous2->second.end()) {
-                    //            continue;
-                    //        }
-                    //        previous2->second.push_back(object1);
-                    //    }
-                    //    else {
-                    //        previousChecks.insert({ object2, std::vector<PhysicsObject*>({object1}) });
-                    //    }
-                    //}
-
+                    previousChecks.push_back(std::make_pair(object1, object2));
 
                     // did a collision occur?
                     collisionFunctionPtr(object1, object2);
