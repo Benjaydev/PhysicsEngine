@@ -16,7 +16,7 @@ V_MIN_ANGULAR_THRESHOLD=1
 V_MIN_FRICTION_THRESHOLD=0.01
 
 # How often should physics update | Seconds
-V_FIXED_UPDATE=0.01;
+V_FIXED_UPDATE=0.01
 
 # Should rigidbodies have their visual positions lerped between physics updates | 0 - No | 1 - Yes
 SHOULD_LERP_POSITIONS=0
@@ -27,6 +27,8 @@ ACTIVE_DEBUG_LINES=0
 # Should fps be shown | 0 - No | 1 - Yes
 SHOW_FPS=1
 
+FIXED_GRID_SPATIAL_PARTITIONING=0
+V_PARTITION_GRID_SIZE=100
 
 # The maximum amount of lines that can be drawn | 0 to inf
 V_MAX_2D_LINES=16384

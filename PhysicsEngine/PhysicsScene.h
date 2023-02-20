@@ -57,7 +57,5 @@ protected:
 	std::vector<PhysicsObject*> UIActors;
 	std::vector<PhysicsObject*> destroyQueue;
 
-
-	int gridSize = 200;
 };
 

@@ -105,56 +105,51 @@ void PhysicsScene::Update(float dt)
     while (accumulatedTime >= fixedDeltaTime)
     {
         spacePartition.clear();
-        int gridCount = floor((INT_MAX/2) / gridSize);
+        int gridCount = floor((INT_MAX/2) / PhysicsEngine::configValues["PARTITION_GRID_SIZE"]);
         for (PhysicsObject* pActor : sceneActors)
         {
             pActor->FixedUpdate(gravity, fixedDeltaTime);
 
-            Rigidbody* body = dynamic_cast<Rigidbody*>(pActor);
+            if (PhysicsEngine::configSettings["FIXED_GRID_SPATIAL_PARTITIONING"] == 1) {
+                Rigidbody* body = dynamic_cast<Rigidbody*>(pActor);
 
-            if (pActor->GetShapeID() == BOX) {
-                //std::cout << body->position.x << ", " << body->position.y << std::endl;
-            }
+                if (body != nullptr) {
+                    glm::vec2 max = glm::vec2((INT_MAX / 2), (INT_MAX / 2));
+                    std::vector<glm::vec2> ps = { body->minBounds + max , body->maxBounds + max, glm::vec2(body->minBounds.x, body->maxBounds.y) + max, glm::vec2(body->minBounds.y, body->maxBounds.x) + max };
 
-            if (body != nullptr) {
-                glm::vec2 max = glm::vec2((INT_MAX / 2), (INT_MAX / 2));
-                std::vector<glm::vec2> ps = { body->minBounds + max , body->maxBounds + max, glm::vec2(body->minBounds.x, body->maxBounds.y) + max, glm::vec2(body->minBounds.y, body->maxBounds.x) + max };
+                    int toGridx = floor(ps[0].x / PhysicsEngine::configValues["PARTITION_GRID_SIZE"]);
+                    int toGridy = floor(ps[0].y / PhysicsEngine::configValues["PARTITION_GRID_SIZE"]);
 
-                int toGridx = floor(ps[0].x / gridSize);
-                int toGridy = floor(ps[0].y / gridSize);
-
-                int minGridPointx = toGridx;
-                int minGridPointy = toGridx;
-                int maxGridPointx = toGridy;
-                int maxGridPointy = toGridy;
+                    int minGridPointx = toGridx;
+                    int minGridPointy = toGridx;
+                    int maxGridPointx = toGridy;
+                    int maxGridPointy = toGridy;
 
 
-                // Get the range of grids that this object is overlapping
-                for (int i = 0; i < 3; i++) {
-                    // Convert to grid point
-                    toGridx = floor(ps[i].x / gridSize);
-                    toGridy = floor(ps[i].y / gridSize);
+                    // Get the range of grids that this object is overlapping
+                    for (int i = 0; i < 3; i++) {
+                        // Convert to grid point
+                        toGridx = floor(ps[i].x / PhysicsEngine::configValues["PARTITION_GRID_SIZE"]);
+                        toGridy = floor(ps[i].y / PhysicsEngine::configValues["PARTITION_GRID_SIZE"]);
 
-                    if (toGridx < minGridPointx) {
-                        minGridPointx = toGridx;
+                        if (toGridx < minGridPointx) {
+                            minGridPointx = toGridx;
+                        }
+                        else if (toGridx > maxGridPointx) {
+                            maxGridPointx = toGridx;
+                        }
+                        if (toGridy < minGridPointy) {
+                            minGridPointy = toGridy;
+                        }
+                        else if (toGridy > maxGridPointy) {
+                            maxGridPointy = toGridy;
+                        }
                     }
-                    else if (toGridx > maxGridPointx) {
-                        maxGridPointx = toGridx;
-                    }
-                    if (toGridy < minGridPointy) {
-                        minGridPointy = toGridy;
-                    }
-                    else if (toGridy > maxGridPointy) {
-                        maxGridPointy = toGridy;
-                    }
-                }
 
 
-                // Get every point in grid within range
-                for (int y = minGridPointy; y < maxGridPointy+1; y++) {
-                    for (int x = minGridPointx; x < maxGridPointx+1; x++) {
-
-                        if (y == minGridPointy || x == minGridPointx || x == maxGridPointx || y == maxGridPointy) {
+                    // Get every point in grid within range
+                    for (int y = minGridPointy; y < maxGridPointy + 1; y++) {
+                        for (int x = minGridPointx; x < maxGridPointx + 1; x++) {
                             int pos = x + (y * gridCount);
 
                             // See if grid point already exists
@@ -164,16 +159,13 @@ void PhysicsScene::Update(float dt)
                             }
                             // If not, create one
                             else {
-                                std::vector<Rigidbody*> newBodies = std::vector<Rigidbody*>();
-                                newBodies.push_back(body);
-                                spacePartition.insert({ pos, newBodies });
+                                spacePartition.insert({ pos, std::vector<Rigidbody*>({body}) });
                             }
-                        }                  
+                        }
                     }
                 }
-
-
             }
+            
 
         }
         for (PhysicsObject* uActor : UIActors)
@@ -187,6 +179,7 @@ void PhysicsScene::Update(float dt)
 
         DestroyAllQueued();
     }
+
 
 
     if (PhysicsEngine::configSettings["SHOULD_LERP_POSITIONS"] == 1) {
@@ -220,8 +213,7 @@ void PhysicsScene::CheckCollisions()
             int shapeId2 = object2->GetShapeID();
 
 
-            // Only check planes like this
-            if (shapeId1 < 0 || shapeId2 < 0 || (shapeId1 != PLANE && shapeId2 != PLANE)) {
+            if (shapeId1 < 0 || shapeId2 < 0 || (PhysicsEngine::configSettings["FIXED_GRID_SPATIAL_PARTITIONING"] == 1 && (shapeId1 != PLANE && shapeId2 != PLANE))) {
                 continue;
             }
 
@@ -236,50 +228,39 @@ void PhysicsScene::CheckCollisions()
         }
     }
 
-    std::vector<std::pair<PhysicsObject*, PhysicsObject*>> previousChecks;
-    // Check space partition
-    for (auto it = spacePartition.begin(); it != spacePartition.end(); ++it) {
-        for (int outer = 0; outer < it->second.size(); outer++) {
-            for (int inner = outer + 1; inner < it->second.size(); inner++) {
-                PhysicsObject* object1 = it->second[outer];
-                PhysicsObject* object2 = it->second[inner];
+    if (PhysicsEngine::configSettings["FIXED_GRID_SPATIAL_PARTITIONING"] == 1) {
+        std::vector<std::pair<PhysicsObject*, PhysicsObject*>> previousChecks;
+        // Check space partition
+        for (auto it = spacePartition.begin(); it != spacePartition.end(); ++it) {
+            for (int outer = 0; outer < it->second.size(); outer++) {
+                for (int inner = outer + 1; inner < it->second.size(); inner++) {
+                    PhysicsObject* object1 = it->second[outer];
+                    PhysicsObject* object2 = it->second[inner];
 
-                /*bool found = false;
-                for (int pair = 0; pair < previousChecks.size(); pair++) {
-                    if ((previousChecks[pair].first == object1 && previousChecks[pair].second == object2) || (previousChecks[pair].first == object2 && previousChecks[pair].second == object1)) {
-                        found = true;
-                        break;
+                    int shapeId1 = object1->GetShapeID();
+                    int shapeId2 = object2->GetShapeID();
+
+
+                    if (shapeId1 < 0 || shapeId2 < 0) {
+                        continue;
                     }
-                }
-                if (found) {
-                    continue;
-                }*/
 
+                    // using function pointers
+                    int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
+                    CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
+                    if (collisionFunctionPtr != nullptr)
+                    {
 
-                int shapeId1 = object1->GetShapeID();
-                int shapeId2 = object2->GetShapeID();
+                        previousChecks.push_back(std::make_pair(object1, object2));
 
+                        // did a collision occur?
+                        collisionFunctionPtr(object1, object2);
 
-                // Only check planes like this
-                if (shapeId1 < 0 || shapeId2 < 0) {
-                    continue;
-                }
-
-                // using function pointers
-                int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
-                CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
-                if (collisionFunctionPtr != nullptr)
-                {
-
-                    previousChecks.push_back(std::make_pair(object1, object2));
-
-                    // did a collision occur?
-                    collisionFunctionPtr(object1, object2);
-
+                    }
                 }
             }
         }
-    }
+    }   
 
 }
 PhysicsObject* PhysicsScene::CheckCollisionsOnPoint(glm::vec2 point, bool checkUI, bool checkWorldObjects)
@@ -362,12 +343,12 @@ bool PhysicsScene::Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2)
         if (intersectionDepth < 0 && dir < 0) {
             float coRestitution = PhysicsEngine::CalculateCoefficientRestitution(circle1->restitution, circle2->restitution);
             glm::vec2 staticVec = glm::vec2(0, 0);
-            float mag = sqrt(sqrMag);
-            glm::vec2 normal = diff / mag;
 
-            float penetration = circle1->radius + circle2->radius - mag;
+            float rad = (circle1->radius + circle2->radius);
+            float penetration = (rad * rad) - sqrMag;
             if (penetration > 0)
             {
+                penetration = circle1->radius + circle2->radius - sqrt(sqrMag);
                 circle1->ResolveCollision(circle2, 0.5f * (circle1->position + circle2->position), nullptr, penetration);
                 circle1 = nullptr;
                 circle2 = nullptr;
