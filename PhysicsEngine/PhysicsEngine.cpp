@@ -27,7 +27,7 @@ PhysicsEngine::PhysicsEngine() {
 }
 
 PhysicsEngine::~PhysicsEngine() {
-	m_font = nullptr;
+	font = nullptr;
 	delete physicsScene;
 	physicsScene = nullptr;
 	physicsEngine = nullptr;
@@ -39,11 +39,11 @@ bool PhysicsEngine::startup() {
 	physicsEngine = this;
 
 
-	m_2dRenderer = new aie::Renderer2D();
+	renderer2D = new aie::Renderer2D();
 
 	// TODO: remember to change this when redistributing a build!
 	// the following path would be used instead: "./font/consolas.ttf"
-	m_font = new aie::Font("./font/consolas.ttf", 30);
+	font = new aie::Font("./font/consolas.ttf", 30);
 
 	aie::Gizmos::create(0, 0, configValues["MAX_2D_LINES"], configValues["MAX_2D_TRIS"]);
 
@@ -55,10 +55,10 @@ bool PhysicsEngine::startup() {
 }
 
 void PhysicsEngine::DrawText(const char* text, glm::vec2 worldPos) {
-	physicsEngine->m_2dRenderer->begin();
+	physicsEngine->renderer2D->begin();
 	glm::vec2 screenPos = physicsEngine->GetScreenSpacePoint(worldPos.x, worldPos.y);
-	physicsEngine->m_2dRenderer->drawText(physicsEngine->m_font, text, screenPos.x, screenPos.y);
-	physicsEngine->m_2dRenderer->end();
+	physicsEngine->renderer2D->drawText(physicsEngine->font, text, screenPos.x, screenPos.y);
+	physicsEngine->renderer2D->end();
 }
  
 void PhysicsEngine::Rope(int num, glm::vec2 position, bool isKinetic) {
@@ -80,8 +80,8 @@ void PhysicsEngine::Rope(int num, glm::vec2 position, bool isKinetic) {
 
 void PhysicsEngine::shutdown() {
 
-	delete m_font;
-	delete m_2dRenderer;
+	delete font;
+	delete renderer2D;
 }
 
 void PhysicsEngine::update(float deltaTime) {
@@ -108,15 +108,9 @@ void PhysicsEngine::update(float deltaTime) {
 	}
 
 	if (input->isKeyDown(aie::INPUT_KEY_L)) {
-		for (int i = 0; i < 1; i++) {
-			Circle* circle = new Circle(glm::vec2(0, 500), glm::vec2(1000, -100), 10.0f, fmax(0.1f, 10), 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
-			physicsScene->AddActor(circle);
-		}
-
-
-
+		Circle* circle = new Circle(glm::vec2(0, 500), glm::vec2(1000, -100), 10.0f, fmax(0.1f, 10), 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
+		physicsScene->AddActor(circle);
 	}
-	std::cout << physicsScene->spacePartition.size() << std::endl;
 
 }
 void PhysicsEngine::TestModeUpdate(float deltaTime) {
@@ -158,7 +152,6 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 		}
 
 		if (col != nullptr && selectedObject != col) {
-			std::cout << "Collide" << std::endl;
 			col->colour += 0.75;
 		}
 		selectedObject = col;
@@ -202,7 +195,7 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 
 		Circle* circle = new Circle(center, glm::vec2(0, 0), 10.0f, fmax(0.1f, radius), 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(0, 1, 0, 1));
 		if (shouldErase) {
-			circle->eraser = shouldErase;
+			circle->isEraser = shouldErase;
 			// Adding some angular velocity fixes some collision detection problems for some reason
 			circle->angularVelocity = 2.0f;
 		}
@@ -232,7 +225,7 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 
 		Box* box = new Box(center, glm::vec2(fmax(0.1f, abs(diff.x)), fmax(0.1f, abs(diff.y))), glm::vec2(0, 0), 90.0f, 0.5f, shouldErase ? glm::vec4(0) : glm::vec4(1, 0, 0, 1));
 		if (shouldErase) {
-			box->eraser = shouldErase;
+			box->isEraser = shouldErase;
 			// Adding some angular velocity fixes some collision detection problems for some reason
 			box->angularVelocity = 2.0f;
 		}
@@ -303,7 +296,7 @@ void PhysicsEngine::TestModeUpdate(float deltaTime) {
 void PhysicsEngine::draw() {
 
 	// begin drawing sprites
-	m_2dRenderer->begin();
+	renderer2D->begin();
 
 	if (configSettings["TEST_MODE"] == 1) {
 		if (circleDrag) {
@@ -314,7 +307,7 @@ void PhysicsEngine::draw() {
 
 			char info[100];
 			sprintf_s(info, 100, "%sCircle: Pos: (%i,%i), Radius: %i", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)radius);
-			m_2dRenderer->drawText(m_font, info, 5, 10);
+			renderer2D->drawText(font, info, 5, 10);
 		}
 		else if (boxDrag) {
 			glm::vec2 center = (dragEnd + dragStart) * 0.5f;
@@ -324,7 +317,7 @@ void PhysicsEngine::draw() {
 
 			char info[100];
 			sprintf_s(info, 100, "%sBox: Pos: (%i,%i), Extents: (%i, %i)", shouldErase ? "Eraser " : "", (int)center.x, (int)center.y, (int)absDiff.x, (int)absDiff.y);
-			m_2dRenderer->drawText(m_font, info, 5, 10);
+			renderer2D->drawText(font, info, 5, 10);
 		}
 		else if (planeDrag) {
 			glm::vec2 diff = (dragEnd - dragStart);
@@ -344,7 +337,7 @@ void PhysicsEngine::draw() {
 
 			char info[100];
 			sprintf_s(info, 100, "Plane: Normal: (%.2f,%.2f), Dist: %i | [Tab] Reverse normal", normal.x, normal.y, (int)dist);
-			m_2dRenderer->drawText(m_font, info, 5, 10);
+			renderer2D->drawText(font, info, 5, 10);
 		}
 		else if (selectedObject != nullptr) {
 
@@ -352,10 +345,10 @@ void PhysicsEngine::draw() {
 			std::string shapeType = selectedObject->GetShapeID() == BOX ? "Box" : selectedObject->GetShapeID() == CIRCLE ? "Circle" : "Plane";
 			char info[100];
 			sprintf_s(info, 100, "Selected Object: %s", shapeType.c_str());
-			m_2dRenderer->drawText(m_font, info, 5, 10);
+			renderer2D->drawText(font, info, 5, 10);
 		}
 		else {
-			m_2dRenderer->drawText(m_font, "R to refresh config", 5, 10);
+			renderer2D->drawText(font, "R to refresh config", 5, 10);
 		}
 	}
 	
@@ -381,15 +374,15 @@ void PhysicsEngine::draw() {
 	if (configSettings["SHOW_FPS"] == 1) {
 		char fps[32];
 		sprintf_s(fps, 32, "FPS: %i", getFPS());
-		m_2dRenderer->drawText(m_font, fps, 0, getWindowHeight() - 32);
+		renderer2D->drawText(font, fps, 0, getWindowHeight() - 32);
 	}
 
 	if (configSettings["TEST_MODE"] == 1) {
 		char zoom[32];
 		sprintf_s(zoom, 32, "Zoom: %.2fx", round((orthoSize / 1000) * 100) / 100);
-		m_2dRenderer->drawText(m_font, zoom, 5, 40);
+		renderer2D->drawText(font, zoom, 5, 40);
 
-		m_2dRenderer->end();
+		renderer2D->end();
 	}
 
 

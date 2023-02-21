@@ -13,7 +13,6 @@ public:
     void Draw() override;
 
     float GetRadius() { return radius; }
-    glm::vec4 GetColour() { return colour; }
 
     float radius;
 

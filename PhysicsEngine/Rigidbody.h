@@ -61,7 +61,7 @@ public:
     glm::vec2 localY;
 
     bool isKinematic = false;
-    bool eraser = false;
+    bool isEraser = false;
     bool isTrigger = false;
 
     int frameCount = 0;

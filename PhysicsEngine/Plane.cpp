@@ -43,7 +43,7 @@ void Plane::Draw() {
 
 void Plane::ResolveCollision(Rigidbody* actor2, glm::vec2 contact)
 {
-    if (actor2->eraser) {
+    if (actor2->isEraser) {
         actor2->frameCount = 0;
         PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
         return;

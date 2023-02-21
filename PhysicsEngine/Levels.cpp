@@ -18,7 +18,7 @@ void Levels::SaveToConsole(std::vector<PhysicsObject*> actors) {
 				body->mass <<
 				", " << body->radius <<
 				", " << body->restitution <<
-				", " << "glm::vec4(" << body->GetColour().r << ", " << body->GetColour().g << ", " << body->GetColour().b << ", " << body->GetColour().a << "));" << std::endl;
+				", " << "glm::vec4(" << body->colour.r << ", " << body->colour.g << ", " << body->colour.b << ", " << body->colour.a << "));" << std::endl;
 		}
 		if (actor->GetShapeID() == BOX) {
 			Box* body = dynamic_cast<Box*>(actor);

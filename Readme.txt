@@ -2,18 +2,18 @@
 
 # Create
 # All shapes can have their sizes changed by dragging the mouse while holding their respective letter
-Create Box: Hold [S] +  Drag Left Mouse Button
-Create Circle: Hold [C] +  Drag Left Mouse Button
-Create Plane: Hold [Q] +  Drag Left Mouse Button
+Create Box: Hold [S] + Drag Left Mouse Button
+Create Circle: Hold [C] + Drag Left Mouse Button
+Create Plane: Hold [Q] + Drag Left Mouse Button
 Toggle Direction of Plane Normal: [Tab]B
 
 # Kinematic
 Create Box: Hold [Left Control] + Hold [S] + Drag Left Mouse Button
-Create Circle: Hold [Left Control] + Hold [C] +  Drag Left Mouse Button
-Create Plane: Hold [Left Control] + Hold [Q] +  Drag Left Mouse Button
+Create Circle: Hold [Left Control] + Hold [C] + Drag Left Mouse Button
+Create Plane: Hold [Left Control] + Hold [Q] + Drag Left Mouse Button
 
 # Object selection
-Select Objecct: Left Mouse Click 
+Select Object: Left Mouse Click 
 Delete Object: [Del] or [Backspace] when selected
 
 # Ropes

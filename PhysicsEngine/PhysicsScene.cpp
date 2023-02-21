@@ -73,7 +73,7 @@ void PhysicsScene::Draw()
 }
 
 
-// function pointer array for doing our collisions
+// Function pointer array collision functions
 typedef bool(*CollisionFn)(PhysicsObject*, PhysicsObject*);
 
 
@@ -96,7 +96,7 @@ static CollisionFn collisionFunctionArray[] =
 
 void PhysicsScene::Update(float dt)
 {
-    // update physics at a fixed time step
+    // Update physics at a fixed delta time 
     deltaTime = dt;
     static float accumulatedTime = 0.0f;
     accumulatedTime += deltaTime;
@@ -110,6 +110,7 @@ void PhysicsScene::Update(float dt)
         {
             pActor->FixedUpdate(gravity, fixedDeltaTime);
 
+            // Spatial Partioning
             if (PhysicsEngine::configSettings["FIXED_GRID_SPATIAL_PARTITIONING"] == 1) {
                 Rigidbody* body = dynamic_cast<Rigidbody*>(pActor);
 
@@ -201,7 +202,7 @@ void PhysicsScene::CheckCollisions()
 {
     int actorCount = sceneActors.size();
 
-    // need to check for collisions against all objects except this one.
+    // Check for collisions against all unique object pairs
     for (int outer = 0; outer < actorCount - 1; outer++)
     {
         for (int inner = outer + 1; inner < actorCount; inner++)
@@ -217,21 +218,22 @@ void PhysicsScene::CheckCollisions()
                 continue;
             }
 
-            // using function pointers
+            // Using function pointers
             int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
             CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
             if (collisionFunctionPtr != nullptr)
             {
-                // did a collision occur?
                 collisionFunctionPtr(object1, object2);
             }
         }
     }
 
+    // Spatial Partioning collision detection
     if (PhysicsEngine::configSettings["FIXED_GRID_SPATIAL_PARTITIONING"] == 1) {
-        std::vector<std::pair<PhysicsObject*, PhysicsObject*>> previousChecks;
+        //std::vector<std::pair<PhysicsObject*, PhysicsObject*>> previousChecks;
         // Check space partition
         for (auto it = spacePartition.begin(); it != spacePartition.end(); ++it) {
+            // Check for collisions against all unique object pairs
             for (int outer = 0; outer < it->second.size(); outer++) {
                 for (int inner = outer + 1; inner < it->second.size(); inner++) {
                     PhysicsObject* object1 = it->second[outer];
@@ -245,15 +247,13 @@ void PhysicsScene::CheckCollisions()
                         continue;
                     }
 
-                    // using function pointers
+                    // Using function pointers
                     int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
                     CollisionFn collisionFunctionPtr = collisionFunctionArray[functionIdx];
                     if (collisionFunctionPtr != nullptr)
                     {
+                        //previousChecks.push_back(std::make_pair(object1, object2));
 
-                        previousChecks.push_back(std::make_pair(object1, object2));
-
-                        // did a collision occur?
                         collisionFunctionPtr(object1, object2);
 
                     }
@@ -298,14 +298,6 @@ PhysicsObject* PhysicsScene::CheckCollisionsOnPoint(glm::vec2 point, std::vector
 }
 
 
-glm::vec2 PhysicsScene::NearestPointOnLine(glm::vec2 linePoint, glm::vec2 dir, glm::vec2 checkPoint)
-{
-    dir = glm::normalize(dir);
-    glm::vec2 v = checkPoint - linePoint;
-    float d = glm::dot(v, dir);
-    return linePoint + dir * d;
-}
-
 
 void PhysicsScene::ApplyContactForces(Rigidbody* body1, Rigidbody* body2, glm::vec2 norm, float pen) {
 
@@ -326,10 +318,10 @@ void PhysicsScene::ApplyContactForces(Rigidbody* body1, Rigidbody* body2, glm::v
 
 bool PhysicsScene::Circle2Circle(PhysicsObject* obj1, PhysicsObject* obj2)
 {
-    // try to cast objects to Circle and Circle
+    // Try to cast objects to Circle and Circle
     Circle* circle1 = dynamic_cast<Circle*>(obj1);
     Circle* circle2 = dynamic_cast<Circle*>(obj2);
-    // if we are successful then test for collision
+    // If successful then test for collision
     if (circle1 != nullptr && circle2 != nullptr)
     {
         // Test for other collision
@@ -368,7 +360,7 @@ bool PhysicsScene::Circle2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 {
     Circle* circle = dynamic_cast<Circle*>(obj1);
     Plane* plane = dynamic_cast<Plane*>(obj2);
-    //if we are successful then test for collision
+    // If successful then test for collision
     if (circle != nullptr && plane != nullptr)
     {
         float sphereToPlane = glm::dot((circle->position), plane->normal) - plane->distanceToOrigin;
@@ -398,32 +390,32 @@ bool PhysicsScene::Plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
     Plane* plane = dynamic_cast<Plane*>(obj1);
     Box* box = dynamic_cast<Box*>(obj2);
 
-    //if we are successful then test for collision 
+    // If successful then test for collision
     if (box != nullptr && plane != nullptr)
     {
         int numContacts = 0;
         glm::vec2 contact(0, 0);
         float contactV = 0;
 
-        // get a representative point on the plane 
+        // Get a representative point on the plane 
         glm::vec2 planeOrigin = plane->normal * plane->distanceToOrigin;
 
-        // check all four corners to see if we've hit the plane 
+        // Check all four corners to see if it hit the plane 
         for (float x = -box->extents.x; x < box->GetWidth(); x += box->GetWidth())
         {
             for (float y = -box->extents.y; y < box->GetHeight(); y += box->GetHeight())
             {
-                // get the position of the corner in world space 
+                // Get the position of the corner in world space 
                 glm::vec2 p = (box->position) + x * box->localX + y * box->localY;
                 float distFromPlane = glm::dot(p - planeOrigin, plane->normal);
 
-                // this is the total velocity of the point in world space 
+                // Total velocity of the point in world space 
                 glm::vec2 displacement = x * box->localX + y * box->localY;
                 glm::vec2 pointVelocity = box->velocity + box->angularVelocity * glm::vec2(-displacement.y, displacement.x);
-                // and this is the component of the point velocity into the plane 
+                // Component of the point velocity into the plane 
                 float velocityIntoPlane = glm::dot(pointVelocity, plane->normal);
 
-                // and moving further in, we need to resolve the collision 
+                // Collision needs to be resolved
                 if (distFromPlane < 0 && velocityIntoPlane <= 0)
                 {
                     numContacts++;
@@ -433,7 +425,7 @@ bool PhysicsScene::Plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
             }
         }
 
-        // we've had a hit - typically only two corners can contact 
+        // Has hit
         if (numContacts > 0)
         {
             plane->ResolveCollision(box, contact / (float)numContacts);
@@ -452,6 +444,7 @@ bool PhysicsScene::Box2Circle(PhysicsObject* obj1, PhysicsObject* obj2) {
     Box* box = dynamic_cast<Box*>(obj1);
     Circle* circle = dynamic_cast<Circle*>(obj2);
 
+    // If successful then test for collision
     if (box != nullptr && circle != nullptr)
     {
         // Transform the circle into the box's coordinate space 
@@ -476,14 +469,16 @@ bool PhysicsScene::Box2Circle(PhysicsObject* obj1, PhysicsObject* obj2) {
         // Convert back into world coordinates 
         glm::vec2 closestPointOnBoxWorld = box->position + closestPointOnBoxBox.x * box->localX + closestPointOnBoxBox.y * box->localY;
         glm::vec2 circleToBox = circle->position - closestPointOnBoxWorld;
-        float penetration = circle->radius - glm::length(circleToBox);
+        float dotCircleToBox = glm::dot(circleToBox, circleToBox);
+        float penetration = (circle->radius*circle->radius) - dotCircleToBox;
 
-        
         if (penetration > 0)
         {
+            // Refine penetration
+            penetration = circle->radius - sqrt(dotCircleToBox);
+
             glm::vec2 direction = circleToBox != glm::vec2(0) ? (circleToBox / penetration) : box->isKinematic ? -circle->velocity : -box->velocity;
-
-
+            
             glm::vec2 contact = closestPointOnBoxWorld;
             box->ResolveCollision(circle, contact, &direction, penetration);
             return true;
@@ -499,6 +494,7 @@ bool PhysicsScene::Circle2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 }bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
     Box* box1 = dynamic_cast<Box*>(obj1);
     Box* box2 = dynamic_cast<Box*>(obj2);
+    // If successful then test for collision
     if (box1 != nullptr && box2 != nullptr) {
         glm::vec2 boxPos = box2->position - box1->position;
         glm::vec2 norm(0, 0);
@@ -523,6 +519,7 @@ bool PhysicsScene::Point2Plane(glm::vec2 point, PhysicsObject* obj) {
 }
 bool PhysicsScene::Point2Box(glm::vec2 point, PhysicsObject* obj) {
     Box* box = dynamic_cast<Box*>(obj);
+    // If successful then test for collision
     if (box != nullptr)
     {
         // Rotate point to be relative to box orientation

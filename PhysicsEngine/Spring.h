@@ -13,8 +13,6 @@ public:
     void Update(float deltaTime) override;
     void Draw() override;
 
-    glm::vec4 GetColour() { return colour; }
-
     glm::vec2 GetContact1();
     glm::vec2 GetContact2();
 
@@ -28,7 +26,4 @@ public:
     float damping;
     float restLength;
     float springCoefficient;  // the restoring force
-
-protected:
-    glm::vec4 colour = glm::vec4(1,1,1,1);
 };

@@ -46,14 +46,15 @@ Rigidbody::~Rigidbody()
 }
 
 void Rigidbody::Draw() {
-    aie::Gizmos::add2DLine(minBounds, glm::vec2(minBounds.x, maxBounds.y), glm::vec4(1, 0.5f, 0, 1));
-    aie::Gizmos::add2DLine(minBounds, glm::vec2(maxBounds.x, minBounds.y), glm::vec4(1, 0.5f, 0, 1));
+    // AABB
+    //aie::Gizmos::add2DLine(minBounds, glm::vec2(minBounds.x, maxBounds.y), glm::vec4(1, 0.5f, 0, 1));
+    //aie::Gizmos::add2DLine(minBounds, glm::vec2(maxBounds.x, minBounds.y), glm::vec4(1, 0.5f, 0, 1));
 
-    aie::Gizmos::add2DLine(maxBounds, glm::vec2(minBounds.x, maxBounds.y), glm::vec4(1, 0.5f, 0, 1));
-    aie::Gizmos::add2DLine(maxBounds, glm::vec2(maxBounds.x, minBounds.y), glm::vec4(1, 0.5f, 0, 1));
+    //aie::Gizmos::add2DLine(maxBounds, glm::vec2(minBounds.x, maxBounds.y), glm::vec4(1, 0.5f, 0, 1));
+    //aie::Gizmos::add2DLine(maxBounds, glm::vec2(maxBounds.x, minBounds.y), glm::vec4(1, 0.5f, 0, 1));
 
     // Show gravity
-    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1 && !eraser) {
+    if (PhysicsEngine::configSettings["ACTIVE_DEBUG_LINES"] == 1 && !isEraser) {
         aie::Gizmos::add2DLine(visualPosition, visualPosition + PhysicsScene::gravity, glm::vec4(1, 0.5f, 0, 1));
         aie::Gizmos::add2DLine(visualPosition, visualPosition + velocity, glm::vec4(1, 1, 0, 1));
 
@@ -81,7 +82,7 @@ void Rigidbody::Update(float deltaTime) {
 void Rigidbody::FixedUpdate(glm::vec2 gravity, float timeStep)
 {
     // Delete self after 2 frames without collision if an eraser
-    if (eraser) {
+    if (isEraser) {
         frameCount++;
         if (frameCount >= 4) {
             PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
@@ -190,12 +191,12 @@ void Rigidbody::ResolveCollision(Rigidbody* actor2, glm::vec2 contact, glm::vec2
     actor2->objectsInsideThisFrame.push_back(this);
 
     // Object should erase other object it collides with
-    if (eraser) {
+    if (isEraser) {
         frameCount = 0;
         PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(actor2);
         return;
     }
-    else if (actor2->eraser) {
+    else if (actor2->isEraser) {
         actor2->frameCount = 0;
         PhysicsEngine::physicsEngine->physicsScene->QueueDestroy(this);
         return;

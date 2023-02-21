@@ -20,8 +20,6 @@ public:
 	virtual void TestModeUpdate(float deltaTime);
 	virtual void draw();
 
-	static PhysicsEngine* physicsEngine;
-
 	glm::vec2 GetScreenSpacePoint(float xWorld, float yWorld);
 	glm::vec2 GetWorldSpacePoint(float xScreen, float yScreen);
 
@@ -37,8 +35,10 @@ public:
 	static std::string Encrypt(std::string text, std::string key);
 	static std::string Decrypt(std::string text, std::string key);
 
-
 	void Rope(int num, glm::vec2 position, bool isKinetic = true);
+
+
+	static PhysicsEngine* physicsEngine;
 
 	static std::map<std::string, int> configSettings;
 	static std::map<std::string, float> configValues;
@@ -68,14 +68,11 @@ public:
 	const float maxOrthoSize =  10000000;
 	glm::vec2 orthoCenter = glm::vec2(0, 0);
 
-
-
 	PhysicsScene* physicsScene = nullptr;
 
 protected:
-	aie::Renderer2D* m_2dRenderer = nullptr;
-	aie::Font* m_font = nullptr;
-
+	aie::Renderer2D* renderer2D = nullptr;
+	aie::Font* font = nullptr;
 
 	float aspectRatio = 0.f;
 
